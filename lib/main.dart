@@ -14,6 +14,7 @@ import 'package:clotstoreapp/views/orderScreen/ordersShowScreen.dart';
 import 'package:clotstoreapp/views/profile-Screen/editProfileScreen.dart';
 import 'package:clotstoreapp/views/profile-Screen/profileScreen.dart';
 import 'package:clotstoreapp/views/signIn/signInScreen.dart';
+import 'package:clotstoreapp/views/signIn/signUpScreen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -64,6 +65,7 @@ class MyApp extends StatelessWidget {
         routes: {
           SplashScreen.routeName: (context) => SplashScreen(), // Use the same name as initialRoute
           SignInScreen.routeName: (context) => SignInScreen(),
+          SignUpScreen.routeName: (context) => SignUpScreen(),
           HomeScreen.routeName: (context) => HomeScreen(),
           MainScreen.routeName: (context) => MainScreen(),
           CategoriesScreen.routeName: (context) => CategoriesScreen(),

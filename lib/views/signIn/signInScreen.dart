@@ -1,7 +1,10 @@
+import 'package:clotstoreapp/views/signIn/signUpScreen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
+
 import '../../config/styles.dart';
 import '../homeScreen/screen/main_screen.dart';
 
@@ -22,6 +25,8 @@ class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
 
+  bool isLoading = false;
+
   void sighin() async {
     await FirebaseAuth.instance.signInWithEmailAndPassword(
       email: _emailController.text.trim(),
@@ -41,15 +46,15 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   void getAuthData() async {
-    String email =_emailController.text.trim();
+    String email = _emailController.text.trim();
 
     final CollectionReference docRef = FirebaseFirestore.instance.collection('authentication');
     try {
-      QuerySnapshot querySnapshot = await docRef.where('email' ,isEqualTo: email).get();
+      QuerySnapshot querySnapshot = await docRef.where('email', isEqualTo: email).get();
       if (querySnapshot.docs.isNotEmpty) {
         print("data exists:");
         DocumentSnapshot doc = querySnapshot.docs.first;
-        Map<String , dynamic> data = doc.data() as Map<String ,dynamic>;
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
         sighin();
       } else {
         setAuthData();
@@ -60,8 +65,11 @@ class _SignInScreenState extends State<SignInScreen> {
     }
   }
 
-
   void _handleGoogleSignIn() async {
+    setState(() {
+      isLoading = true;
+    });
+    print('Loader Start : $isLoading');
     try {
       User? user = await _authService.signInWithGoogle();
       if (user != null) {
@@ -76,27 +84,36 @@ class _SignInScreenState extends State<SignInScreen> {
         SnackBar(content: Text("Google Sign-In failed. Please try again.")),
       );
     }
+    setState(() {
+      isLoading = false;
+    });
+    print('Loader End : $isLoading');
   }
-
-
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              getTitle(),
-              getEmailTextFieldWidget(),
-              getPasswordTextFieldWidget(),
-              getForgotPassword(),
-              getContinueButton(),
-              getCreateNewAccount(),
-              getSignUpWithApple(),
-              getSignUpWithGoogle(),
-            ],
+    return ModalProgressHUD(
+      inAsyncCall: isLoading,
+      progressIndicator: CircularProgressIndicator(
+        backgroundColor: Colors.transparent,
+        color: Colors.black,
+      ),
+      child: Scaffold(
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                getTitle(),
+                getEmailTextFieldWidget(),
+                getPasswordTextFieldWidget(),
+                getForgotPassword(),
+                getContinueButton(),
+                getCreateNewAccount(),
+                getSignUpWithApple(),
+                getSignUpWithGoogle(),
+              ],
+            ),
           ),
         ),
       ),
@@ -255,10 +272,15 @@ class _SignInScreenState extends State<SignInScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text("Don't have an account? "),
-        Text(
-          'Create One',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
+        InkWell(
+          onTap: () {
+            Navigator.pushNamed(context, SignUpScreen.routeName);
+          },
+          child: Text(
+            'Create One',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ],
@@ -323,7 +345,6 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 }
-
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
