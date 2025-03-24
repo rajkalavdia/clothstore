@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "815914890644",
+    "project_id": "cloth-store-170f4",
+    "storage_bucket": "cloth-store-170f4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:815914890644:android:7015e0922aa0aeb3578b81",
+        "android_client_info": {
+          "package_name": "com.example.clothstore"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "815914890644-na8lddjjvnb5jpq0qq46vlbs5pqdng2d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.clothstore",
+            "certificate_hash": "6ded2c2f6eeed05e79a09be78e0113f6ef877d60"
+          }
+        },
+        {
+          "client_id": "815914890644-3l54d9bfkk3c56uj398alqihpl79faad.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBR5jZX0L3yri9UjJebCer1KGQsYz0ritg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "815914890644-3l54d9bfkk3c56uj398alqihpl79faad.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "815914890644-b8feufvksuae6bgvssj38p960gvfpscp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.clothstore"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
