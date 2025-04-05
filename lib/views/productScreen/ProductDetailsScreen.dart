@@ -1,6 +1,3 @@
-import 'dart:io';
-import 'dart:math';
-
 import 'package:clotstoreapp/config/constant.dart';
 import 'package:clotstoreapp/model/cartProductModel.dart';
 import 'package:clotstoreapp/model/productReviewModel.dart';
@@ -36,7 +33,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
     CartProvider cartProvider = context.read<CartProvider>();
     final _items = cartProvider.cartProductsList;
-
     List<CartProductModel> exist = _items.where((item) {
       return productDetails.productId == item.cartProductId && dropDownValueSize == item.cartProductSize && dropDownValueColor == item.cartProductColor;
     }).toList();

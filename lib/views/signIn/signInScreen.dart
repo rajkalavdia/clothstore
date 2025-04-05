@@ -1,12 +1,11 @@
+import 'package:clotstoreapp/backend/controller/signInController.dart';
+import 'package:clotstoreapp/views/signIn/otpVerification.dart';
 import 'package:clotstoreapp/views/signIn/signUpScreen.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 
 import '../../config/styles.dart';
-import '../homeScreen/screen/main_screen.dart';
+import '../../model/userModel.dart';
 
 class SignInScreen extends StatefulWidget {
   static const String routeName = '/SignInScreen';
@@ -19,70 +18,85 @@ class SignInScreen extends StatefulWidget {
 
 class _SignInScreenState extends State<SignInScreen> {
   final FocusNode _focusNode = FocusNode();
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  bool _isValidationEnabled = false;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final AuthService _authService = AuthService();
+  TextEditingController _numberController = TextEditingController();
+  final GlobalKey<FormState> _numberFrmKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  bool _isValidationEnabled = false;
+  bool _isNumberValidationEnabled = false;
 
   bool isLoading = false;
 
-  void sighin() async {
-    await FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
-    );
-  }
+  // @override
+  // void dispose() {
+  //   _focusNode.dispose();
+  //   _emailController.dispose();
+  //   _passwordController.dispose();
+  //   _numberController.dispose();
+  //   super.dispose();
+  // }
 
-  void setAuthData() async {
-    CollectionReference authData = FirebaseFirestore.instance.collection('authentication');
-    final data1 = <String, dynamic>{
-      'email': _emailController.text,
-      'password': _passwordController.text,
-    };
-    await authData.doc().set(data1);
-    // print('object created: ${authData.id}');
-    sighin();
-  }
-
-  void getAuthData() async {
-    String email = _emailController.text.trim();
-
-    final CollectionReference docRef = FirebaseFirestore.instance.collection('authentication');
-    try {
-      QuerySnapshot querySnapshot = await docRef.where('email', isEqualTo: email).get();
-      if (querySnapshot.docs.isNotEmpty) {
-        print("data exists:");
-        DocumentSnapshot doc = querySnapshot.docs.first;
-        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-        sighin();
-      } else {
-        setAuthData();
-      }
-      Navigator.pushReplacementNamed(context, MainScreen.routeName);
-    } catch (e) {
-      print("Error getting document: $e");
-    }
-  }
+  // void getAuthData() async {
+  //   String email = _emailController.text.trim();
+  //   String password = _passwordController.text.trim();
+  //
+  //   final CollectionReference docRef = FirebaseFirestore.instance.collection('users');
+  //
+  //   try {
+  //     QuerySnapshot querySnapshotEmail = await docRef.where('email', isEqualTo: email).get();
+  //     QuerySnapshot querySnapshotPassword = await docRef.where('password', isEqualTo: password).get();
+  //
+  //     if (querySnapshotEmail.docs.isEmpty) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text("Incorrect Email"), backgroundColor: Colors.red),
+  //       );
+  //       return;
+  //     }
+  //
+  //     if (querySnapshotPassword.docs.isEmpty) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text("Incorrect Password"), backgroundColor: Colors.red),
+  //       );
+  //       return;
+  //     }
+  //
+  //     // Successful login
+  //     await await FirebaseAuth.instance.signInWithEmailAndPassword(
+  //       email: _emailController.text.trim(),
+  //       password: _passwordController.text.trim(),
+  //     );
+  //     if (!context.mounted) return;
+  //     Navigator.pushReplacementNamed(
+  //       context,
+  //       MainScreen.routeName,
+  //     );
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+  //     );
+  //     print("exception error : $e");
+  //   }
+  // }
 
   void _handleGoogleSignIn() async {
     setState(() {
       isLoading = true;
     });
     print('Loader Start : $isLoading');
-    try {
-      User? user = await _authService.signInWithGoogle();
-      if (user != null) {
-        print("Google Sign-In Success: ${user.displayName}");
-        Navigator.pushReplacementNamed(context, MainScreen.routeName);
+    UserModel? user = await UserController().signInWithGoogle(context);
+
+    if (user != null) {
+      // If new user (no phone number), navigate to complete profile
+      if (user.phoneNumber == null) {
+        Navigator.of(context).pushReplacementNamed('/NewProfileScreen');
       } else {
-        print("Google Sign-In failed: User is null.");
+        // Existing user, go to home
+        Navigator.of(context).pushReplacementNamed('/MainScreen');
       }
-    } catch (e) {
-      print("Google Sign-In Error: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Google Sign-In failed. Please try again.")),
-      );
+    } else {
+      // Show error
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Google sign in failed. Please try again.')));
     }
     setState(() {
       isLoading = false;
@@ -97,6 +111,7 @@ class _SignInScreenState extends State<SignInScreen> {
       progressIndicator: CircularProgressIndicator(
         backgroundColor: Colors.transparent,
         color: Colors.black,
+        year2023: true,
       ),
       child: Scaffold(
         body: SafeArea(
@@ -110,6 +125,8 @@ class _SignInScreenState extends State<SignInScreen> {
                 getForgotPassword(),
                 getContinueButton(),
                 getCreateNewAccount(),
+                getPhoneNumberTextField(),
+                getOTPButton(),
                 getSignUpWithApple(),
                 getSignUpWithGoogle(),
               ],
@@ -253,7 +270,18 @@ class _SignInScreenState extends State<SignInScreen> {
           setState(() {
             _isValidationEnabled = true;
           });
-          getAuthData();
+          // getAuthData();
+          UserModel? user = await UserController().signInUser(
+            _emailController.text,
+            _passwordController.text,
+          );
+          if (user != null) {
+            // Navigate to home
+            Navigator.of(context).pushReplacementNamed('/MainScreen');
+          } else {
+            // Show error
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sign in failed. Please check your credentials.')));
+          }
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.deepPurpleAccent,
@@ -287,6 +315,101 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
+  Widget getPhoneNumberTextField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(18, 30, 18, 0),
+          child: Text('Phone Number'),
+        ),
+        Container(
+          height: 80,
+          margin: EdgeInsets.fromLTRB(18, 2, 18, 0),
+          decoration: BoxDecoration(
+            color: Colors.grey[350],
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Form(
+                  key: _numberFrmKey,
+                  child: TextFormField(
+                    controller: _numberController,
+                    keyboardType: TextInputType.number,
+                    autovalidateMode: _isNumberValidationEnabled ? AutovalidateMode.always : AutovalidateMode.disabled,
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 20,
+                    ),
+                    validator: (String? value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a mobile number';
+                      }
+                      if (!value.startsWith("+")) {
+                        return 'Number must start with + followed by country code';
+                      }
+                      String pattern = r'^\+[0-9]+$';
+                      if (!RegExp(pattern).hasMatch(value)) {
+                        return 'Only digits allowed after "+"';
+                      }
+                      if (value.length < 11 || value.length > 14) {
+                        return 'Enter a valid phone number';
+                      }
+                      return null;
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Enter your Number',
+                      // labelText: 'Phone Number',
+                      // contentPadding: EdgeInsets.fromLTRB(5, 18, 0, 0),
+                      hintStyle: TextStyle(
+                        color: Colors.black38,
+                        fontSize: 20,
+                      ),
+                      labelStyle: TextStyle(color: Colors.black38),
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget getOTPButton() {
+    return Container(
+      height: 80,
+      margin: EdgeInsets.fromLTRB(18, 10, 18, 0),
+      padding: EdgeInsets.fromLTRB(15, 15, 15, 10),
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: () async {
+          setState(() {
+            _isNumberValidationEnabled = true;
+          });
+          if (_numberFrmKey.currentState!.validate()) {
+            await Navigator.pushNamed(context, OtpVerification.routeName, arguments: {
+              "number": _numberController.text.trim(),
+            });
+          }
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.deepPurpleAccent,
+          elevation: 0,
+        ),
+        child: Text(
+          'Get OTP',
+          style: TextStyle(color: Colors.white, fontSize: 20),
+        ),
+      ),
+    );
+  }
+
   Widget getSignUpWithApple() {
     return Container(
       height: 60,
@@ -303,7 +426,7 @@ class _SignInScreenState extends State<SignInScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(28, 0, 0, 0),
             child: Text(
-              'Continue With Apple',
+              'SignUP With Apple',
               style: TextStyle(
                 fontSize: 22,
               ),
@@ -333,7 +456,7 @@ class _SignInScreenState extends State<SignInScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(25, 0, 0, 0),
               child: Text(
-                'Continue With Google',
+                'SignUp With Google',
                 style: TextStyle(
                   fontSize: 22,
                 ),
@@ -343,41 +466,5 @@ class _SignInScreenState extends State<SignInScreen> {
         ),
       ),
     );
-  }
-}
-
-class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  Future<User?> signInWithGoogle() async {
-    try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return null;
-
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      UserCredential userCredential = await _auth.signInWithCredential(credential);
-      User? user = userCredential.user;
-
-      if (user != null) {
-        await _firestore.collection("users").doc(user.uid).set({
-          "name": user.displayName,
-          "email": user.email,
-          "profilePic": user.photoURL,
-          "uid": user.uid,
-        }, SetOptions(merge: true));
-      }
-
-      return user;
-    } catch (e) {
-      print("Google Sign-In Error: $e");
-      return null;
-    }
   }
 }

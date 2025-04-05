@@ -1,10 +1,11 @@
-import 'package:clotstoreapp/backend/provider/userProvider/userProvider.dart';
 import 'package:clotstoreapp/views/profile-Screen/editProfileScreen.dart';
 import 'package:clotstoreapp/views/signIn/signInScreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
+
+import '../../backend/provider/userProvider/userProvider.dart';
 
 class ProfileScreen extends StatefulWidget {
   static const routeName = '/ProfileScreen';
@@ -16,18 +17,46 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-
-  final user = FirebaseAuth.instance.currentUser;
   GoogleSignIn _googleSignIn = GoogleSignIn();
+  FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
+  String editName = " Loading....";
+  String editEmail = " Loading....";
+  String editNumber = " Loading....";
+  UserProvider? userProvider;
 
-  void signout() async{
-    await _googleSignIn.disconnect();
-    await FirebaseAuth.instance.signOut();
+  void getUserDetails() async {
+    print("getUserDetails");
+
+    if (!context.mounted) return print("context.mounted");
+
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final user = userProvider.user;
+    print('user UId : ${user?.uid}');
+    if (user != null) {
+      setState(() {
+        editName = user.name ?? "No Name";
+        editEmail = user.email ?? "No Email";
+        editNumber = user.phoneNumber ?? "No Number";
+      });
+      print("Edit Name : $editName");
+      print("Edit Email : $editEmail");
+      print("Edit Number : $editNumber");
+    }
   }
 
-  late UserProvider userProvider;
+  @override
+  void didChangeDependencies() {
+    // TODO: implement didChangeDependencies
+    super.didChangeDependencies();
+    userProvider = context.read<UserProvider>();
+    getUserDetails();
+  }
 
+  Future<void> signout() async {
+    await _googleSignIn.signOut();
+    await _firebaseAuth.signOut();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,18 +102,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget getUserDetailsWidget(BuildContext context) {
-    userProvider = context.watch<UserProvider>();
-    final editName = (userProvider.profileModel.name.isEmpty)
-        ? "Riddhi patel"
-        : userProvider.profileModel.name;
-
-    final editEmail = (userProvider.profileModel.email.isEmpty)
-        ? "${user?.email}"
-        : userProvider.profileModel.email;
-
-    final editNumber = (userProvider.profileModel.phoneNumber.isEmpty)
-        ? "+91 9544435648"
-        : userProvider.profileModel.phoneNumber;
     return Container(
       height: 110,
       margin: EdgeInsets.fromLTRB(15, 20, 15, 15),
@@ -98,14 +115,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               Text(
-                 editName,
+                editName,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               Text(
-               editEmail,
+                editEmail,
                 style: TextStyle(
                   fontSize: 18,
                   color: Colors.black38,
@@ -121,14 +138,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
           InkWell(
-            onTap: (){
-              Navigator.pushNamed(context, EditProfileScreen.routeName,
-                arguments: <String , String>{
-                  "EditName": editName,
-                  "EditEmail": editEmail,
-                  "EditNumber": editNumber,
-                }
-              );
+            onTap: () {
+              Navigator.pushNamed(context, EditProfileScreen.routeName, arguments: <String, String>{
+                "EditName": editName,
+                "EditEmail": editEmail,
+                "EditNumber": editNumber,
+              });
             },
             child: Text(
               'Edit',
@@ -256,19 +271,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         InkWell(
           onTap: () async {
-            // SharedPreferences prefs = await SharedPreferences.getInstance();
-            // await prefs.setBool('isSignedIn', false);
-            signout();
+            await signout();
             Navigator.pushNamed(context, SignInScreen.routeName);
             Navigator.popUntil(context, (route) => route.settings.name == SignInScreen.routeName);
           },
           child: Text(
             'Sign Out',
-            style: TextStyle(
-              color: Colors.red,
-              fontSize: 18,
-              fontWeight: FontWeight.bold
-            ),
+            style: TextStyle(color: Colors.red, fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
       ],
