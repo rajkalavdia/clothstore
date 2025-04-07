@@ -1,0 +1,13 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "orbital-signal-369106",
+          "appId": "1:831777599075:android:a04dd7a6377203d00d1256",
+          "fileOutput": "android/app/google-services.json"
+        }
+      }
+    }
+  }
+}
