@@ -1,4 +1,5 @@
 import 'package:clotstoreapp/backend/controller/signInController.dart';
+import 'package:clotstoreapp/views/profile-Screen/newUserDetailsScreen.dart';
 import 'package:clotstoreapp/views/signIn/otpVerification.dart';
 import 'package:clotstoreapp/views/signIn/signUpScreen.dart';
 import 'package:flutter/material.dart';
@@ -271,13 +272,17 @@ class _SignInScreenState extends State<SignInScreen> {
             _isValidationEnabled = true;
           });
           // getAuthData();
-          UserModel? user = await UserController().signInUser(
-            _emailController.text,
-            _passwordController.text,
-          );
+          UserModel? user = await UserController().signInUser(_emailController.text, _passwordController.text, context);
+          print("user12345678 : ${user?.email}");
+          print("user12345678 : ${user?.name}");
+          print("user12345678 : ${user?.phoneNumber}");
           if (user != null) {
-            // Navigate to home
-            Navigator.of(context).pushReplacementNamed('/MainScreen');
+            if (user.phoneNumber == null || user.name == null || user.email == null) {
+              Navigator.pushNamed(context, NewProfileScreen.routeName);
+              UserModel? user = await UserController().signInUser(_emailController.text, _passwordController.text, context);
+            } else {
+              Navigator.of(context).pushReplacementNamed('/MainScreen');
+            }
           } else {
             // Show error
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sign in failed. Please check your credentials.')));

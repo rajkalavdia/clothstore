@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:clotstoreapp/views/profile-Screen/editProfileScreen.dart';
 import 'package:clotstoreapp/views/signIn/signInScreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -5,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 
+import '../../backend/controller/profilePictureController.dart';
 import '../../backend/provider/userProvider/userProvider.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -25,6 +28,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String editNumber = " Loading....";
   UserProvider? userProvider;
 
+  Uint8List? galleryImage;
+  String? image;
+
   void getUserDetails() async {
     print("getUserDetails");
 
@@ -34,28 +40,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = userProvider.user;
     print('user UId : ${user?.uid}');
     if (user != null) {
-      setState(() {
-        editName = user.name ?? "No Name";
-        editEmail = user.email ?? "No Email";
-        editNumber = user.phoneNumber ?? "No Number";
-      });
+      if (mounted) setState(() {});
+      editName = user.name ?? "No Name";
+      editEmail = user.email ?? "No Email";
+      editNumber = user.phoneNumber ?? "No Number";
       print("Edit Name : $editName");
       print("Edit Email : $editEmail");
       print("Edit Number : $editNumber");
     }
   }
 
-  @override
-  void didChangeDependencies() {
-    // TODO: implement didChangeDependencies
-    super.didChangeDependencies();
-    userProvider = context.read<UserProvider>();
-    getUserDetails();
-  }
-
-  Future<void> signout() async {
+  Future<void> signOut() async {
     await _googleSignIn.signOut();
     await _firebaseAuth.signOut();
+    userProvider?.clearUser();
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    userProvider = context.read<UserProvider>();
+    getUserDetails();
   }
 
   @override
@@ -82,18 +88,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget getUserImageWidget() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Stack(
       children: [
-        Container(
-          height: 110,
-          width: 110,
-          margin: EdgeInsets.only(top: 90),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(40)),
-          child: ClipOval(
-            child: Image.asset(
-              'asset/images/profile_picture.jpg',
-              fit: BoxFit.fill,
+        (userProvider?.user?.imageUrl != null)
+            ? Container(
+                height: 100,
+                width: 100,
+                margin: EdgeInsets.only(top: 90),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(40),
+                ),
+                child: ClipOval(
+                  child: Image.network(
+                    userProvider!.user!.imageUrl!,
+                    fit: BoxFit.cover,
+                    height: 100,
+                  ),
+                ),
+              )
+            : Container(
+                height: 100,
+                width: 100,
+                margin: EdgeInsets.only(top: 90),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(40)),
+                child: ClipOval(
+                  child: Image.asset(
+                    'asset/images/profile_picture.png',
+                    fit: BoxFit.fill,
+                  ),
+                ),
+              ),
+        Positioned(
+          bottom: 1,
+          left: 60,
+          child: Container(
+            height: 35,
+            width: 35,
+            margin: EdgeInsets.all(8),
+            padding: EdgeInsets.zero,
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(40)),
+            child: IconButton(
+              onPressed: () async {
+                try {
+                  await uploadProfilePicture(userProvider!);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Profile picture uploaded')),
+                  );
+                  setState(() {});
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to upload profile picture')),
+                  );
+                }
+              },
+              icon: Icon(
+                Icons.add_a_photo_outlined,
+                size: 20,
+              ),
             ),
           ),
         ),
@@ -271,7 +322,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         InkWell(
           onTap: () async {
-            await signout();
+            await signOut();
             Navigator.pushNamed(context, SignInScreen.routeName);
             Navigator.popUntil(context, (route) => route.settings.name == SignInScreen.routeName);
           },

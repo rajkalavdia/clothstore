@@ -40,7 +40,7 @@ class _OtpVerificationState extends State<OtpVerification> {
     try {
       UserModel? user = await UserController().signInWithPhone(
         number!,
-        _verificationId!,
+        _verificationId,
         otpController.text.toString(),
         context,
       );
@@ -140,7 +140,6 @@ class _OtpVerificationState extends State<OtpVerification> {
       print("arguments:$arguments");
 
       final numberArgs = arguments as Map<String, String>;
-      // final numberArgs = ModalRoute.of(context)!.settings.arguments as Map<String , String>;
       number = numberArgs["number"]!;
       _verifyPhone();
     });

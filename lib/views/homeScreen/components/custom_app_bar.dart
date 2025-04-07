@@ -1,4 +1,7 @@
+import 'package:clotstoreapp/backend/provider/userProvider/userProvider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 class CustomAppBar extends StatefulWidget {
   const CustomAppBar({super.key});
 
@@ -8,6 +11,14 @@ class CustomAppBar extends StatefulWidget {
 
 class _CustomAppBarState extends State<CustomAppBar> {
   TextEditingController _textEditingController = TextEditingController();
+  UserProvider? userProvider;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    userProvider = Provider.of<UserProvider>(context, listen: false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,18 +47,31 @@ class _CustomAppBarState extends State<CustomAppBar> {
           onTap: (){
             Navigator.pushNamed(context, '/ProfileScreen');
           },
-          child: Container(
-            height: 55,
+          child: (userProvider?.user?.imageUrl != null)
+              ? Container(
+                  height: 55,
             width: 55,
             margin: EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.white,
               borderRadius: BorderRadius.circular(40),
-              image: DecorationImage(
-                image: AssetImage(
-                  'asset/images/profile_picture.jpg',
-                ),
-                fit: BoxFit.fill,
+                  ),
+                  child: ClipOval(
+                    child: Image.network(
+                      userProvider!.user!.imageUrl!,
+                      fit: BoxFit.cover,
+                      height: 55,
+                    ),
+                  ),
+                )
+              : Container(
+                  height: 50,
+                  width: 50,
+                  margin: EdgeInsets.only(top: 90),
+                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(40)),
+                  child: ClipOval(
+                    child: Image.asset(
+                      'asset/images/profile_picture.png',
+                      fit: BoxFit.fill,
               ),
             ),
           ),

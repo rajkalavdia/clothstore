@@ -29,7 +29,6 @@ class _NewProfileScreenState extends State<NewProfileScreen> {
 
   bool isEmailEnabled = true;
   bool isNumberEnabled = true;
-  bool isNameEnabled = true;
 
   late UserProvider userProvider;
   bool _dataLoaded = false;
@@ -53,7 +52,6 @@ class _NewProfileScreenState extends State<NewProfileScreen> {
             isEmailEnabled = false;
             break;
           case 'google':
-            isNameEnabled = false;
             isEmailEnabled = false;
             break;
           case 'phone':
@@ -127,9 +125,10 @@ class _NewProfileScreenState extends State<NewProfileScreen> {
     }
 
     bool success = await UserController().updateUserProfile(
-      name: (isNameEnabled && _nameController.text.isNotEmpty) ? _nameController.text : null,
+      name: _nameController.text,
       phoneNumber: (isNumberEnabled && _numberController.text.isNotEmpty) ? _numberController.text : null,
       email: (isEmailEnabled && _emailController.text.isNotEmpty) ? _emailController.text : null,
+      context: context,
     );
     setState(() {
       _isLoading = false;
@@ -217,7 +216,6 @@ class _NewProfileScreenState extends State<NewProfileScreen> {
           TextFormField(
             style: const TextStyle(fontSize: 15, color: Colors.black),
             controller: _nameController,
-            enabled: isNameEnabled,
             autovalidateMode: _isNameValidationEnabled ? AutovalidateMode.always : AutovalidateMode.disabled,
             validator: (String? value) {
               if (value == null || value.isEmpty) {

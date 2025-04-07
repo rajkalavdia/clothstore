@@ -9,7 +9,6 @@ import '../../model/userModel.dart';
 
 class UserController {
   UserProvider? userProvider;
-  UserModel? userModel;
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -89,9 +88,9 @@ class UserController {
 
         if (userDoc.exists) {
           // User exists, load their data
-          userModel = UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
-          userProvider = getUserProvider(context);
-          userProvider?.setUser(userModel!);
+          UserModel userModel = UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
+          UserProvider userProvider = getUserProvider(context);
+          userProvider.setUser(userModel);
 
           return userModel;
         } else {
@@ -151,7 +150,7 @@ class UserController {
           if (userDoc.exists) {
             // User exists, load their data
             print("User exists in Firestore, loading data...");
-            userModel = UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
+            UserModel userModel = UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
             print("User model created from Firestore: $userModel");
 
             await _firestore.collection('users').doc(user.uid).update({
@@ -161,7 +160,7 @@ class UserController {
 
             userProvider = getUserProvider(context);
             print("UserProvider: $userProvider");
-            userProvider?.setUser(userModel!);
+            userProvider?.setUser(userModel);
             print("User set in provider");
             return userModel;
           } else {
@@ -213,7 +212,9 @@ class UserController {
   }
 
   // Update user profile
-  Future<bool> updateUserProfile({String? name, String? email, String? phoneNumber}) async {
+  Future<bool> updateUserProfile({String? name, String? email, String? phoneNumber, required BuildContext context}) async {
+    UserModel? userModel = getUserProvider(context).user;
+
     try {
       if (_auth.currentUser == null) return false;
 
@@ -222,27 +223,45 @@ class UserController {
 
       if (name != null && name.isNotEmpty) {
         updateData['name'] = name;
-        userModel?.name = name;
       }
 
       if (email != null && email.isNotEmpty) {
         updateData['email'] = email;
-        userModel?.email = email;
       }
 
       if (phoneNumber != null && phoneNumber.isNotEmpty) {
         updateData['phoneNumber'] = phoneNumber;
-        userModel?.phoneNumber = phoneNumber;
       }
 
-      if (userModel != null && isProfileComplete(userModel!)) {
+      if (userModel != null && isProfileComplete(userModel)) {
         updateData['profileComplete'] = true;
-        userModel!.profileComplete = true;
       }
 
       print("updateData : $updateData");
-      // Update in Firestore
+
       await _firestore.collection('users').doc(uid).update(updateData);
+
+      if (name != null && name.isNotEmpty) {
+        userModel?.name = name;
+      }
+
+      if (email != null && email.isNotEmpty) {
+        userModel?.email = email;
+      }
+
+      if (phoneNumber != null && phoneNumber.isNotEmpty) {
+        userModel?.phoneNumber = phoneNumber;
+      }
+
+      if (userModel != null && isProfileComplete(userModel)) {
+        userModel.profileComplete = true;
+      }
+
+      print('usermodel name : ${userModel?.name}');
+      print('usermodel email : ${userModel?.email}');
+      print('usermodel phoneNumber : ${userModel?.phoneNumber}');
+      print('usermodel profileComplete : ${userModel?.profileComplete}');
+
       return true;
     } catch (e) {
       print('Error updating profile: $e');
@@ -271,7 +290,7 @@ class UserController {
   }
 
   // Sign in existing user with email/password
-  Future<UserModel?> signInUser(String email, String password) async {
+  Future<UserModel?> signInUser(String email, String password, context) async {
     try {
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
@@ -283,11 +302,34 @@ class UserController {
       if (user != null) {
         DocumentSnapshot userDoc = await _firestore.collection('users').doc(user.uid).get();
         if (userDoc.exists) {
-          userModel = UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
+          UserModel userModel = UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
+
+          DateTime lastLogin = DateTime.now();
           await _firestore.collection('users').doc(user.uid).update({
-            'lastLogin': DateTime.now(),
+            'lastLogin': lastLogin,
           });
+          userModel.lastLogin = lastLogin;
+          userProvider = getUserProvider(context);
+          userProvider?.setUser(userModel);
           return userModel;
+        } else if (user.displayName == null || user.email == null || user.phoneNumber == null) {
+          UserModel newUser = UserModel(
+            email: user.email,
+            name: user.displayName,
+            phoneNumber: user.phoneNumber,
+            uid: user.uid,
+            signInMethod: 'email',
+            profileComplete: false,
+          );
+
+          try {
+            await _firestore.collection('users').doc(user.uid).set(newUser.toMap());
+            userProvider = getUserProvider(context);
+            userProvider?.setUser(newUser);
+          } catch (e) {
+            print("Error saving to Firestore: $e");
+          }
+          return newUser;
         }
       }
       return null;
@@ -306,15 +348,18 @@ class UserController {
         DocumentSnapshot userDoc = await _firestore.collection('users').doc(currentUser.uid).get();
 
         if (userDoc.exists) {
-          userModel = UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
+          UserModel userModel = UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
 
           // Update last login time
-          await _firestore.collection('users').doc(userModel?.uid).update({
-            'lastLogin': DateTime.now(),
+          DateTime lastLogin = DateTime.now();
+
+          await _firestore.collection('users').doc(userModel.uid).update({
+            'lastLogin': lastLogin,
           });
+          userModel.lastLogin = lastLogin;
           userProvider = getUserProvider(context);
-          userProvider?.setUser(userModel!);
-          print("user Model for get data : ${userModel?.uid}");
+          userProvider?.setUser(userModel);
+          print("user Model for get data : ${userModel.uid}");
           return userModel;
         }
       }
