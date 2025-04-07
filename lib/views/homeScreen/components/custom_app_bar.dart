@@ -10,12 +10,10 @@ class CustomAppBar extends StatefulWidget {
 }
 
 class _CustomAppBarState extends State<CustomAppBar> {
-  TextEditingController _textEditingController = TextEditingController();
   UserProvider? userProvider;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     userProvider = Provider.of<UserProvider>(context, listen: false);
   }

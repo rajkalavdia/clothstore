@@ -17,7 +17,6 @@ class _NewProfileScreenState extends State<NewProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _numberController;
-  late TextEditingController _passwordController;
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final GlobalKey<FormState> _numberFrmKey = GlobalKey<FormState>();
@@ -152,7 +151,6 @@ class _NewProfileScreenState extends State<NewProfileScreen> {
     _nameController = TextEditingController();
     _emailController = TextEditingController();
     _numberController = TextEditingController();
-    _passwordController = TextEditingController();
     userData;
   }
 
