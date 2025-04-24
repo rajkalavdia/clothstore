@@ -1,10 +1,12 @@
-import 'package:clotstoreapp/backend/provider/userProvider/userProvider.dart';
 import 'package:clotstoreapp/views/profile-Screen/editProfileScreen.dart';
 import 'package:clotstoreapp/views/signIn/signInScreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
+
+import '../../backend/controller/profilePictureController.dart';
+import '../../backend/provider/userProvider/userProvider.dart';
 
 class ProfileScreen extends StatefulWidget {
   static const routeName = '/ProfileScreen';
@@ -16,18 +18,47 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
-  final user = FirebaseAuth.instance.currentUser;
-  GoogleSignIn _googleSignIn = GoogleSignIn();
+  String editName = " Loading....";
+  String editEmail = " Loading....";
+  String editNumber = " Loading....";
+  UserProvider? userProvider;
 
+  String? image;
 
-  void signout() async{
-    await _googleSignIn.disconnect();
-    await FirebaseAuth.instance.signOut();
+  void getUserDetails() async {
+    print("getUserDetails");
+
+    if (!context.mounted) return print("context.mounted");
+
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final user = userProvider.user;
+    print('user UId : ${user?.uid}');
+    if (user != null) {
+      if (mounted) setState(() {});
+      editName = user.name ?? "No Name";
+      editEmail = user.email ?? "No Email";
+      editNumber = user.phoneNumber ?? "No Number";
+      print("Edit Name : $editName");
+      print("Edit Email : $editEmail");
+      print("Edit Number : $editNumber");
+    }
   }
 
-  late UserProvider userProvider;
+  Future<void> signOut() async {
+    await _googleSignIn.signOut();
+    await _firebaseAuth.signOut();
+    userProvider?.clearUser();
+  }
 
+  @override
+  void initState() {
+    super.initState();
+    userProvider = context.read<UserProvider>();
+    getUserDetails();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,18 +84,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget getUserImageWidget() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Stack(
       children: [
-        Container(
-          height: 110,
-          width: 110,
-          margin: EdgeInsets.only(top: 90),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(40)),
-          child: ClipOval(
-            child: Image.asset(
-              'asset/images/profile_picture.jpg',
-              fit: BoxFit.fill,
+        (userProvider?.user?.imageUrl != null)
+            ? Container(
+                height: 100,
+                width: 100,
+                margin: EdgeInsets.only(top: 90),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(40),
+                ),
+                child: ClipOval(
+                  child: Image.network(
+                    userProvider!.user!.imageUrl!,
+                    fit: BoxFit.cover,
+                    height: 100,
+                  ),
+                ),
+              )
+            : Container(
+                height: 100,
+                width: 100,
+                margin: EdgeInsets.only(top: 90),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(40)),
+                child: ClipOval(
+                  child: Image.asset(
+                    'asset/images/profile_picture.png',
+                    fit: BoxFit.fill,
+                  ),
+                ),
+              ),
+        Positioned(
+          bottom: 1,
+          left: 60,
+          child: Container(
+            height: 35,
+            width: 35,
+            margin: EdgeInsets.all(8),
+            padding: EdgeInsets.zero,
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(40)),
+            child: IconButton(
+              onPressed: () async {
+                try {
+                  await uploadProfilePicture(userProvider!);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Profile picture uploaded')),
+                  );
+                  setState(() {});
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to upload profile picture')),
+                  );
+                }
+              },
+              icon: Icon(
+                Icons.add_a_photo_outlined,
+                size: 20,
+              ),
             ),
           ),
         ),
@@ -73,18 +149,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget getUserDetailsWidget(BuildContext context) {
-    userProvider = context.watch<UserProvider>();
-    final editName = (userProvider.profileModel.name.isEmpty)
-        ? "Riddhi patel"
-        : userProvider.profileModel.name;
-
-    final editEmail = (userProvider.profileModel.email.isEmpty)
-        ? "${user?.email}"
-        : userProvider.profileModel.email;
-
-    final editNumber = (userProvider.profileModel.phoneNumber.isEmpty)
-        ? "+91 9544435648"
-        : userProvider.profileModel.phoneNumber;
     return Container(
       height: 110,
       margin: EdgeInsets.fromLTRB(15, 20, 15, 15),
@@ -98,14 +162,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               Text(
-                 editName,
+                editName,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               Text(
-               editEmail,
+                editEmail,
                 style: TextStyle(
                   fontSize: 18,
                   color: Colors.black38,
@@ -121,14 +185,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
           InkWell(
-            onTap: (){
-              Navigator.pushNamed(context, EditProfileScreen.routeName,
-                arguments: <String , String>{
-                  "EditName": editName,
-                  "EditEmail": editEmail,
-                  "EditNumber": editNumber,
-                }
-              );
+            onTap: () {
+              Navigator.pushNamed(context, EditProfileScreen.routeName, arguments: <String, String>{
+                "EditName": editName,
+                "EditEmail": editEmail,
+                "EditNumber": editNumber,
+              });
             },
             child: Text(
               'Edit',
@@ -256,19 +318,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         InkWell(
           onTap: () async {
-            // SharedPreferences prefs = await SharedPreferences.getInstance();
-            // await prefs.setBool('isSignedIn', false);
-            signout();
+            await signOut();
             Navigator.pushNamed(context, SignInScreen.routeName);
             Navigator.popUntil(context, (route) => route.settings.name == SignInScreen.routeName);
           },
           child: Text(
             'Sign Out',
-            style: TextStyle(
-              color: Colors.red,
-              fontSize: 18,
-              fontWeight: FontWeight.bold
-            ),
+            style: TextStyle(color: Colors.red, fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
       ],

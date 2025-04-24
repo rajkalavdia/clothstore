@@ -1,6 +1,6 @@
+import 'package:clothstore_admin_pannel/model/user/userModel.dart';
 import 'package:clotstoreapp/backend/provider/userProvider/userProvider.dart';
-import 'package:clotstoreapp/model/profileModel.dart';
-import 'package:clotstoreapp/views/Profile-Screen/profileScreen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -20,6 +20,96 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController _numberController = TextEditingController();
 
   late UserProvider userProvider;
+  late UserModel userModel;
+
+  Future<String?> validateUserDetails({String? name, String? email, String? number}) async {
+    final CollectionReference usersCollection = FirebaseFirestore.instance.collection('users');
+
+    try {
+      // Check for existing email
+      if (email != null && email.isNotEmpty) {
+        QuerySnapshot emailQuery = await usersCollection.where('email', isEqualTo: email).get();
+        if (emailQuery.docs.isNotEmpty) {
+          return "This email is already registered. Please use a different one.";
+        }
+      }
+
+      // Check for existing phone number
+      if (number != null && number.isNotEmpty) {
+        QuerySnapshot numberQuery = await usersCollection.where('number', isEqualTo: number).get();
+        if (numberQuery.docs.isNotEmpty) {
+          return "This phone number is already registered. Please use a different one.";
+        }
+      }
+
+      // Check for existing name (optional)
+      if (name != null && name.isNotEmpty) {
+        QuerySnapshot nameQuery = await usersCollection.where('name', isEqualTo: name).get();
+        if (nameQuery.docs.isNotEmpty) {
+          return "This name is already taken. Please choose a different one.";
+        }
+      }
+    } catch (e) {
+      return "Error checking user details: $e";
+    }
+
+    return null; // No duplicates found, validation passed
+  }
+
+  Future<UserModel?> userProfileModel(BuildContext context) async {
+    String newName = _nameController.text.trim();
+    String newEmail = _emailController.text.trim();
+    String newNumber = _numberController.text.trim();
+
+    // Validate if name, email, or number already exist
+    String? validationError = await validateUserDetails(name: newName, email: newEmail, number: newNumber);
+
+    if (validationError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(validationError)));
+      return null; // Stop if validation fails
+    }
+
+    FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+    try {
+      DocumentSnapshot userDoc = await _firestore.collection('users').doc(userModel.uid).get();
+
+      if (userDoc.exists) {
+        // User exists, load their data
+        userModel = UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
+
+        UserModel newUserData = UserModel(
+          name: newName,
+          email: newEmail,
+          phoneNumber: newNumber,
+        );
+
+        await _firestore.collection('users').doc(userModel.uid).update({
+          'lastLogin': DateTime.now(),
+          'name': newName,
+          'email': newEmail,
+          'phoneNumber': newNumber,
+        });
+
+        userProvider.setUser(newUserData);
+
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Profile updated successfully!")));
+
+        if (mounted) {
+          Navigator.pop(context); // Close the edit profile screen
+        }
+
+        return newUserData;
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("User document does not exist")));
+        return null;
+      }
+    } catch (e) {
+      print("Error checking user in Firestore: $e");
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to update profile: $e")));
+      return null;
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -33,19 +123,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController.text = preFillName!;
     _emailController.text = preFillEmail!;
     _numberController.text = preFillNumber!;
+
+    userProvider = Provider.of<UserProvider>(context, listen: false);
+    userModel = userProvider.user!;
   }
-   void editProfileModel(){
-      ProfileModel updateProfileModel = ProfileModel(
-        name: _nameController.text,
-        email: _emailController.text,
-        phoneNumber: _numberController.text,
-      );
-      userProvider.profileModelUpdate(updateProfileModel);
-    }
 
   @override
   Widget build(BuildContext context) {
-    userProvider = context.watch<UserProvider>();
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -155,8 +239,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       children: [
         InkWell(
           onTap: () {
-            editProfileModel();
-            Navigator.pop(context);
+            userProfileModel(context);
           },
           child: Container(
             height: 50,

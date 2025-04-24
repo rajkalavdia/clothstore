@@ -1,13 +1,12 @@
 import 'dart:math';
 
+import 'package:clothstore_admin_pannel/model/user/cartProductModel.dart';
+import 'package:clothstore_admin_pannel/model/user/ordersModel.dart';
 import 'package:clotstoreapp/backend/provider/ordersList/addOrderProvider.dart';
-import 'package:clotstoreapp/model/ordersModel.dart';
-import 'package:clotstoreapp/navigation/orderCostData.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../backend/provider/cart/cart-provider.dart';
-import '../../model/cartProductModel.dart';
 
 class CheckoutScreen extends StatefulWidget {
   static const routeName = '/CheckoutScreen';

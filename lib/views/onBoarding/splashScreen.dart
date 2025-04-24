@@ -1,9 +1,8 @@
 import 'package:animated_text_kit/animated_text_kit.dart';
-import 'package:clotstoreapp/views/homeScreen/screen/home_screen.dart';
-import 'package:clotstoreapp/views/homeScreen/screen/main_screen.dart';
-import 'package:clotstoreapp/views/signIn/signInScreen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:clothstore_admin_pannel/model/user/userModel.dart';
+import 'package:clotstoreapp/backend/controller/signInController.dart';
 import 'package:flutter/material.dart';
+
 import '../../config/styles.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -16,20 +15,27 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-
   @override
   void initState() {
     super.initState();
-    navigateOfSplashScreen();
+    // Check if user is already logged in
+    checkUserStatus();
   }
 
-  final user = FirebaseAuth.instance.currentUser;
+  Future<void> checkUserStatus() async {
+    Future.delayed(const Duration(seconds: 4), () {});
 
+    // Try to load user data from Firebase
+    UserModel? user1 = await UserController().loadUserData(context);
+    print("user in splashscreen : ${user1?.uid}");
 
-  void navigateOfSplashScreen() {
-    Future.delayed(const Duration(seconds: 4), () {
-      Navigator.pushNamed(context, (user == null) ? SignInScreen.routeName : MainScreen.routeName);
-    });
+    // Navigate based on result
+    if (user1 != null) {
+      Navigator.of(context).pushReplacementNamed('/MainScreen');
+    } else {
+      // No user logged in, go to login screen
+      Navigator.of(context).pushReplacementNamed('/SignInScreen');
+    }
   }
 
   @override
@@ -44,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen> {
           child: AnimatedTextKit(
             animatedTexts: [
               WavyAnimatedText(
-                'clot',
+                'cloth',
                 textStyle: TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: splashScreenTextColors),
               ),
             ],

@@ -1,13 +1,20 @@
-import 'package:clotstoreapp/model/profileModel.dart';
+import 'package:clothstore_admin_pannel/model/user/userModel.dart';
 import 'package:flutter/cupertino.dart';
 
-class UserProvider extends ChangeNotifier{
-  ProfileModel _profileModel = ProfileModel();
+class UserProvider extends ChangeNotifier {
+  UserModel? _userModel;
 
-  ProfileModel get profileModel => _profileModel;
+  UserModel? get user => _userModel;
 
-  void profileModelUpdate(ProfileModel updateProfilemodel){
-    _profileModel = updateProfilemodel;
-   notifyListeners();
+  void setUser(UserModel user) {
+    if (_userModel != user) {
+      _userModel = user;
+      notifyListeners();
+    }
+  }
+
+  void clearUser() {
+    _userModel = null;
+    notifyListeners();
   }
 }

@@ -1,4 +1,4 @@
-import 'package:clotstoreapp/model/cartProductModel.dart';
+import 'package:clothstore_admin_pannel/model/user/cartProductModel.dart';
 import 'package:flutter/foundation.dart';
 
 class CartProvider extends ChangeNotifier {
