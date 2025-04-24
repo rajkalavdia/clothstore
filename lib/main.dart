@@ -1,5 +1,5 @@
-import 'package:clotstoreapp/backend/provider/favoriteButton/favoriteButtonProvider.dart';
 import 'package:clotstoreapp/backend/provider/ordersList/addOrderProvider.dart';
+import 'package:clotstoreapp/backend/provider/product/productProvider.dart';
 import 'package:clotstoreapp/views/cart/cartProductList.dart';
 import 'package:clotstoreapp/views/cart/checkoutScreen.dart';
 import 'package:clotstoreapp/views/cart/placedOrder.dart';
@@ -10,8 +10,8 @@ import 'package:clotstoreapp/views/homeScreen/screen/searchScreen.dart';
 import 'package:clotstoreapp/views/onBoarding/splashScreen.dart';
 import 'package:clotstoreapp/views/orderScreen/orderDetailsScreen.dart';
 import 'package:clotstoreapp/views/orderScreen/ordersShowScreen.dart';
+import 'package:clotstoreapp/views/profile-Screen/completeProfileScreen.dart';
 import 'package:clotstoreapp/views/profile-Screen/editProfileScreen.dart';
-import 'package:clotstoreapp/views/profile-Screen/newUserDetailsScreen.dart';
 import 'package:clotstoreapp/views/profile-Screen/profileScreen.dart';
 import 'package:clotstoreapp/views/signIn/otpVerification.dart';
 import 'package:clotstoreapp/views/signIn/signInScreen.dart';
@@ -57,9 +57,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider<ProductProvider>(create: (context) => ProductProvider()),
         ChangeNotifierProvider<CartProvider>(create: (context) => CartProvider()),
         ChangeNotifierProvider<BottomNavBarProvider>(create: (context) => BottomNavBarProvider()),
-        ChangeNotifierProvider<FavoriteButtonProvider>(create: (context) => FavoriteButtonProvider()),
         ChangeNotifierProvider<OrderProvider>(create: (context) => OrderProvider()),
         ChangeNotifierProvider<UserProvider>(create: (context) => UserProvider()),
       ],
@@ -72,7 +72,7 @@ class MyApp extends StatelessWidget {
           SplashScreen.routeName: (context) => SplashScreen(), // Use the same name as initialRoute
           SignInScreen.routeName: (context) => SignInScreen(),
           SignUpScreen.routeName: (context) => SignUpScreen(),
-          NewProfileScreen.routeName: (context) => NewProfileScreen(),
+          CompleteProfileScreen.routeName: (context) => CompleteProfileScreen(),
           OtpVerification.routeName: (context) => OtpVerification(),
           HomeScreen.routeName: (context) => HomeScreen(),
           MainScreen.routeName: (context) => MainScreen(),

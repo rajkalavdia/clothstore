@@ -1,5 +1,5 @@
+import 'package:clothstore_admin_pannel/model/user/userModel.dart';
 import 'package:clotstoreapp/backend/provider/userProvider/userProvider.dart';
-import 'package:clotstoreapp/model/userModel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:clotstoreapp/views/profile-Screen/editProfileScreen.dart';
 import 'package:clotstoreapp/views/signIn/signInScreen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -20,15 +18,14 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  GoogleSignIn _googleSignIn = GoogleSignIn();
-  FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
   String editName = " Loading....";
   String editEmail = " Loading....";
   String editNumber = " Loading....";
   UserProvider? userProvider;
 
-  Uint8List? galleryImage;
   String? image;
 
   void getUserDetails() async {

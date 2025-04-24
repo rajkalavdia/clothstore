@@ -1,12 +1,12 @@
+import 'package:clothstore_admin_pannel/model/user/userModel.dart';
 import 'package:clotstoreapp/backend/controller/signInController.dart';
-import 'package:clotstoreapp/views/profile-Screen/newUserDetailsScreen.dart';
+import 'package:clotstoreapp/views/profile-Screen/completeProfileScreen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../backend/provider/userProvider/userProvider.dart';
 import '../../config/styles.dart';
-import '../../model/userModel.dart';
 
 class SignUpScreen extends StatefulWidget {
   static const String routeName = '/SignUpScreen';
@@ -64,7 +64,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         userProvider.setUser(user); // Set new user data
 
         // Navigate to the next screen with pre-filled email
-        Navigator.of(context).pushReplacementNamed(NewProfileScreen.routeName);
+        Navigator.of(context).pushReplacementNamed(CompleteProfileScreen.routeName);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sign up failed. Please try again.')));
       }

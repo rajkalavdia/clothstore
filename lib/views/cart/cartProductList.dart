@@ -1,14 +1,11 @@
 import 'dart:core';
-import 'package:flutter/cupertino.dart';
+
+import 'package:clothstore_admin_pannel/model/user/cartProductModel.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
+
 import '../../backend/provider/cart/cart-provider.dart';
-import '../../config/constant.dart';
-import '../../model/cartProductModel.dart';
-import '../../model/productsModel.dart';
 import '../../navigation/orderCostData.dart';
-import '../homeScreen/components/custom_app_bar.dart';
 
 class CartProductList extends StatefulWidget {
   static const routeName = '/CartProductList';
@@ -149,7 +146,7 @@ class _CartProductListState extends State<CartProductList> {
                           Container(
                             height: 20,
                             width: 20,
-                            decoration: BoxDecoration(color: _model.cartProductColor, shape: BoxShape.circle),
+                            child: Text(_model.cartProductColor!),
                           ),
                         ],
                       ),

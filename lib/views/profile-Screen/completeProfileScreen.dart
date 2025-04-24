@@ -4,16 +4,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class NewProfileScreen extends StatefulWidget {
+class CompleteProfileScreen extends StatefulWidget {
   static const String routeName = "/NewProfileScreen";
 
-  const NewProfileScreen({super.key});
+  const CompleteProfileScreen({super.key});
 
   @override
-  State<NewProfileScreen> createState() => _NewProfileScreenState();
+  State<CompleteProfileScreen> createState() => _CompleteProfileScreenState();
 }
 
-class _NewProfileScreenState extends State<NewProfileScreen> {
+class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _numberController;

@@ -1,7 +1,6 @@
+import 'package:clothstore_admin_pannel/model/user/ordersModel.dart';
 import 'package:clotstoreapp/backend/provider/cart/cart-provider.dart';
 import 'package:clotstoreapp/backend/provider/ordersList/addOrderProvider.dart';
-import 'package:clotstoreapp/config/constant.dart';
-import 'package:clotstoreapp/model/ordersModel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:timelines_plus/timelines_plus.dart';
@@ -228,7 +227,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                             Container(
                               height: 20,
                               width: 20,
-                              decoration: BoxDecoration(color: orderIdArgs.checkOutOrdersList[index].cartProductColor, shape: BoxShape.circle),
+                              child: Text(orderIdArgs.checkOutOrdersList[index].cartProductColor),
                             ),
                           ],
                         ),

@@ -1,3 +1,4 @@
+import 'package:clothstore_admin_pannel/model/user/userModel.dart';
 import 'package:clotstoreapp/backend/provider/userProvider/userProvider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -5,7 +6,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 
-import '../../model/userModel.dart';
 
 class UserController {
   UserProvider? userProvider;
@@ -160,6 +160,7 @@ class UserController {
 
             userProvider = getUserProvider(context);
             print("UserProvider: $userProvider");
+            print("UserProvider: $userProvider");
             userProvider?.setUser(userModel);
             print("User set in provider");
             return userModel;
@@ -169,7 +170,7 @@ class UserController {
             UserModel newUser = UserModel(
               email: '',
               uid: user.uid,
-              phoneNumber: user.phoneNumber,
+              phoneNumber: user.phoneNumber!,
               signInMethod: 'phone',
               profileComplete: false,
               createdAt: DateTime.now(),
@@ -314,9 +315,9 @@ class UserController {
           return userModel;
         } else if (user.displayName == null || user.email == null || user.phoneNumber == null) {
           UserModel newUser = UserModel(
-            email: user.email,
-            name: user.displayName,
-            phoneNumber: user.phoneNumber,
+            email: user.email!,
+            name: user.displayName!,
+            phoneNumber: user.phoneNumber!,
             uid: user.uid,
             signInMethod: 'email',
             profileComplete: false,

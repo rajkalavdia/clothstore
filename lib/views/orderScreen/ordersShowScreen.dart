@@ -1,10 +1,7 @@
 import 'package:clotstoreapp/backend/provider/ordersList/addOrderProvider.dart';
-import 'package:clotstoreapp/config/constant.dart';
-import 'package:clotstoreapp/model/ordersModel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../homeScreen/components/custom_bottum_bar.dart';
 
 class OrdersShowScreen extends StatefulWidget {
   static const String routeName = '/OrdersShowScreen';

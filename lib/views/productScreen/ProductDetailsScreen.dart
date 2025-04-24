@@ -1,18 +1,17 @@
+import 'package:clothstore_admin_pannel/model/productModel.dart';
+import 'package:clothstore_admin_pannel/model/user/cartProductModel.dart';
+import 'package:clothstore_admin_pannel/model/user/productReviewModel.dart';
 import 'package:clotstoreapp/config/constant.dart';
-import 'package:clotstoreapp/model/cartProductModel.dart';
-import 'package:clotstoreapp/model/productReviewModel.dart';
 import 'package:clotstoreapp/views/cart/cartProductList.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:provider/provider.dart';
 
 import '../../backend/provider/cart/cart-provider.dart';
-import '../../backend/provider/favoriteButton/favoriteButtonProvider.dart';
-import '../../model/productsModel.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   static const String routeName = '/ProductDetailsScreen';
-  final ProductsModel productDetails;
+  final ProductModel productDetails;
 
   const ProductDetailsScreen({super.key, required this.productDetails});
 
@@ -21,20 +20,19 @@ class ProductDetailsScreen extends StatefulWidget {
 }
 
 class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
-  late ProductsModel productDetails;
+  // late ProductModel productDetails;
 
-  String? dropDownValueSize;
-  Color? dropDownValueColor;
   int _currentQuantity = 0;
+  String dropDownSizeItem = " ";
+  String dropDownColorItem = " ";
 
   List<ProductReviewModel> productReviews = ProductReviewModelList.productReview;
 
   Future<void> addToCart() async {
-
     CartProvider cartProvider = context.read<CartProvider>();
     final _items = cartProvider.cartProductsList;
     List<CartProductModel> exist = _items.where((item) {
-      return productDetails.productId == item.cartProductId && dropDownValueSize == item.cartProductSize && dropDownValueColor == item.cartProductColor;
+      return widget.productDetails.productId == item.cartProductId && dropDownSizeItem == item.cartProductSize && dropDownColorItem == item.cartProductColor;
     }).toList();
 
     print('exist list lenght : ${exist.length}');
@@ -44,12 +42,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       print('current Quantity: ${exist[0].cartProductQuantity}');
     } else {
       CartProductModel cartProductModel = CartProductModel(
-        cartProductId: productDetails.productId,
-        cartProductImage: productDetails.productImage,
-        cartProductName: productDetails.productName,
-        cartProductPrice: productDetails.productPrice,
-        cartProductSize: dropDownValueSize!,
-        cartProductColor: dropDownValueColor,
+        cartProductId: widget.productDetails.productId,
+        cartProductImage: widget.productDetails.productImages[0],
+        cartProductName: widget.productDetails.brandName,
+        cartProductPrice: widget.productDetails.productPrice,
+        cartProductSize: dropDownSizeItem,
+        cartProductColor: dropDownColorItem,
         cartProductQuantity: _currentQuantity,
       );
       cartProvider.addToCart(cartProductModel);
@@ -64,17 +62,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   @override
   void initState() {
     super.initState();
-
-    productDetails = widget.productDetails;
-    dropDownValueSize = productDetails.productSize.firstOrNull;
-    dropDownValueColor = productDetails.productColor.firstOrNull;
+    dropDownSizeItem = widget.productDetails.productSize.firstOrNull!;
+    dropDownColorItem = widget.productDetails.productColor.firstOrNull!;
+    // productDetails = widget.productDetails;
   }
-
-  late FavoriteButtonProvider favoriteButtonProvider;
 
   @override
   Widget build(BuildContext context) {
-    favoriteButtonProvider = context.watch<FavoriteButtonProvider>();
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -88,17 +82,17 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   getHeader(),
                   getListOfImages(),
                   getProductName(),
+                  getProductDescription(),
                   getProductPrice(),
                   getProductSizeWidget(),
                   getProductColorWidget(),
                   getProductQuantityWidget(),
-                  getProductDescription(),
                   getProductReturnDetails(),
                   getProductReviews(),
                 ],
               ),
             ),
-            getAddedtoCartButton(),
+            getAddedToCartButton(),
           ],
         ),
       ),
@@ -154,9 +148,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           ),
           child: IconButton(
             onPressed: () {
-              favoriteButtonProvider.toggleFavorite(productDetails.productId);
+              widget.productDetails.productFavourite = !widget.productDetails.productFavourite;
             },
-            icon: (favoriteButtonProvider.isFavorite(productDetails.productId))
+            icon: (widget.productDetails.productFavourite == false)
                 ? Image.asset(
                     'asset/icons/default_like_button.png',
                     height: 35,
@@ -175,14 +169,14 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     return SizedBox(
       height: 250,
       child: ListView.builder(
-          itemCount: productDetails.productImageList.length,
+          itemCount: widget.productDetails.productImages.length,
           scrollDirection: Axis.horizontal,
           itemBuilder: (contex, index) {
-            final _model = productDetails.productImageList[index];
+            final _model = widget.productDetails.productImages[index];
             return Container(
               color: Colors.grey,
               padding: EdgeInsets.symmetric(horizontal: 15),
-              child: Image.asset(
+              child: Image.network(
                 _model,
                 fit: BoxFit.fill,
               ),
@@ -195,7 +189,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(15, 10, 0, 10),
       child: Text(
-        productDetails.productName,
+        widget.productDetails.brandName,
         style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
@@ -208,7 +202,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(15, 10, 0, 10),
       child: Text(
-        '\$${productDetails.productPrice}',
+        '₹${widget.productDetails.productPrice}',
         style: TextStyle(
           fontSize: 22,
           color: Colors.deepPurpleAccent,
@@ -240,31 +234,28 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             ),
           ),
           DropdownButton(
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-              color: Colors.black,
-            ),
+            value: dropDownSizeItem,
             icon: Image.asset(
-              'asset/icons/arrowdownBlack.png',
-              height: 30,
+              "asset/icons/arrowdownBlack.png",
+              height: 20,
             ),
-            onChanged: (String? value) {
-              print("value:$value");
-
-              setState(() {
-                dropDownValueSize = value!;
-              });
-            },
-            isDense: true,
-            underline: SizedBox(),
-            items: productDetails.productSize.map<DropdownMenuItem<String>>((String value) {
+            underline: Container(
+              color: Colors.transparent,
+              height: 0,
+              width: 0,
+            ),
+            items: widget.productDetails.productSize.map<DropdownMenuItem<String>>((String value) {
               return DropdownMenuItem<String>(
-                child: Text(value),
                 value: value,
+                child: Text(
+                  value,
+                  style: TextStyle(fontSize: 20),
+                ),
               );
             }).toList(),
-            value: dropDownValueSize,
+            onChanged: (String? value) {
+              dropDownSizeItem = value!;
+            },
           ),
           SizedBox(
             width: 15,
@@ -300,40 +291,35 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             ),
           ),
           DropdownButton(
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-              color: Colors.black,
-            ),
+            value: dropDownColorItem,
             icon: Image.asset(
-              'asset/icons/arrowdownBlack.png',
-              height: 30,
+              "asset/icons/arrowdownBlack.png",
+              height: 20,
             ),
-            onChanged: (Color? value) {
-              print("value:$value");
-              setState(() {
-                dropDownValueColor = value!;
-              });
-            },
-            isDense: true,
-            underline: SizedBox(),
-            items: productDetails.productColor.map<DropdownMenuItem<Color>>((Color value) {
-              return DropdownMenuItem<Color>(
+            underline: Container(
+              color: Colors.transparent,
+              height: 0,
+              width: 0,
+            ),
+            items: widget.productDetails.productColor.map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
                 child: Container(
                   height: 25,
                   width: 25,
-                  margin: EdgeInsets.symmetric(
-                    horizontal: 20,
-                  ),
+                  margin: EdgeInsets.symmetric(horizontal: 5),
                   decoration: BoxDecoration(
-                    color: value,
+                    color: Color(
+                      int.parse(value),
+                    ),
                     borderRadius: BorderRadius.circular(40),
                   ),
                 ),
-                value: value,
               );
             }).toList(),
-            value: dropDownValueColor,
+            onChanged: (String? value) {
+              dropDownColorItem = value!;
+            },
           ),
           SizedBox(
             width: 15,
@@ -430,7 +416,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(15, 0, 15, 10),
       child: Text(
-        productDetails.description,
+        widget.productDetails.productDescription,
         style: TextStyle(
           color: Colors.black38,
         ),
@@ -438,8 +424,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 
-  Widget getAddedtoCartButton() {
-    CartProductModel cartProductModel = CartProductModel();
+  Widget getAddedToCartButton() {
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -462,7 +447,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       margin: EdgeInsets.only(right: 10),
                       // padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Text(
-                        '\$${productDetails.productPrice * _currentQuantity}',
+                        '\$${widget.productDetails.productPrice * _currentQuantity}',
                         style: TextStyle(
                           fontSize: 22,
                           color: Colors.white,

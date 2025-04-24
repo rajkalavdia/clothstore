@@ -20,38 +20,32 @@ class _CustomAppBarState extends State<CustomAppBar> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Container(
-          height: 170,
-          child: Column(
-            children: [
-              getHeaderWidget(),
-              getTextfieldWidget()
-            ],
-          ),
-        ),
+    return Container(
+      height: 170,
+      child: Column(
+        children: [
+          getHeaderWidget(),
+        ],
       ),
     );
   }
 
-  Widget getHeaderWidget(){
+  Widget getHeaderWidget() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         InkWell(
-          onTap: (){
+          onTap: () {
             Navigator.pushNamed(context, '/ProfileScreen');
           },
           child: (userProvider?.user?.imageUrl != null)
               ? Container(
                   height: 55,
-            width: 55,
-            margin: EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(40),
+                  width: 55,
+                  margin: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(40),
                   ),
                   child: ClipOval(
                     child: Image.network(
@@ -61,27 +55,27 @@ class _CustomAppBarState extends State<CustomAppBar> {
                     ),
                   ),
                 )
-              : Container(
-                  height: 50,
-                  width: 50,
-                  margin: EdgeInsets.only(top: 90),
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(40)),
-                  child: ClipOval(
-                    child: Image.asset(
-                      'asset/images/profile_picture.png',
-                      fit: BoxFit.fill,
-              ),
-            ),
-          ),
+              : Image.asset(
+                  'asset/images/profile_picture.png',
+                  height: 75,
+                  width: 75,
+                  fit: BoxFit.cover,
+                ),
         ),
         Container(
           height: 55,
           width: 55,
           margin: EdgeInsets.all(10),
-          decoration: BoxDecoration(color: Colors.deepPurpleAccent, borderRadius: BorderRadius.circular(40)),
+          decoration: BoxDecoration(
+            color: Colors.deepPurpleAccent,
+            borderRadius: BorderRadius.circular(40),
+          ),
           child: IconButton(
             onPressed: () {
-              Navigator.pushNamed(context, '/CartProductList',);
+              Navigator.pushNamed(
+                context,
+                '/CartProductList',
+              );
             },
             icon: Image.asset(
               'asset/icons/bag2.png',
@@ -90,41 +84,6 @@ class _CustomAppBarState extends State<CustomAppBar> {
           ),
         )
       ],
-    );
-  }
-
-  Widget getTextfieldWidget(){
-    return InkWell(
-      onTap: (){
-        Navigator.pushNamed(context, "/SearchScreen");
-      },
-      child: Container(
-        height: 60,
-        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        margin: EdgeInsets.symmetric(horizontal: 10),
-        decoration: BoxDecoration(
-          color: Colors.grey[300],
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Row(
-          children: [
-            Image.asset(
-              'asset/icons/searchButton.png',
-              height: 25,
-              width: 25,
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              child: Text(
-                'Search',
-                style: TextStyle(
-                    fontSize: 18
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

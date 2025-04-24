@@ -1,12 +1,12 @@
+import 'package:clothstore_admin_pannel/model/user/userModel.dart';
 import 'package:clotstoreapp/backend/controller/signInController.dart';
-import 'package:clotstoreapp/views/profile-Screen/newUserDetailsScreen.dart';
+import 'package:clotstoreapp/views/profile-Screen/completeProfileScreen.dart';
 import 'package:clotstoreapp/views/signIn/otpVerification.dart';
 import 'package:clotstoreapp/views/signIn/signUpScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 
 import '../../config/styles.dart';
-import '../../model/userModel.dart';
 
 class SignInScreen extends StatefulWidget {
   static const String routeName = '/SignInScreen';
@@ -112,7 +112,6 @@ class _SignInScreenState extends State<SignInScreen> {
       progressIndicator: CircularProgressIndicator(
         backgroundColor: Colors.transparent,
         color: Colors.black,
-        year2023: true,
       ),
       child: Scaffold(
         body: SafeArea(
@@ -278,7 +277,7 @@ class _SignInScreenState extends State<SignInScreen> {
           print("user12345678 : ${user?.phoneNumber}");
           if (user != null) {
             if (user.phoneNumber == null || user.name == null || user.email == null) {
-              Navigator.pushNamed(context, NewProfileScreen.routeName);
+              Navigator.pushNamed(context, CompleteProfileScreen.routeName);
               UserModel? user = await UserController().signInUser(_emailController.text, _passwordController.text, context);
             } else {
               Navigator.of(context).pushReplacementNamed('/MainScreen');

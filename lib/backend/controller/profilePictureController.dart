@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:clotstoreapp/model/userModel.dart';
+import 'package:clothstore_admin_pannel/model/user/userModel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -9,17 +9,17 @@ import 'package:image_picker/image_picker.dart';
 import '../provider/userProvider/userProvider.dart';
 
 Future<void> uploadProfilePicture(UserProvider userProvider) async {
+  User? user = FirebaseAuth.instance.currentUser;
   final picker = ImagePicker();
   XFile? pickedImage = await picker.pickImage(source: ImageSource.gallery);
   if (pickedImage != null) {
     File imageFile = File(pickedImage.path);
     String fileName = DateTime.now().millisecondsSinceEpoch.toString();
-    Reference ref = FirebaseStorage.instance.ref().child('profilePictures/$fileName');
+    Reference ref = FirebaseStorage.instance.ref().child('user/${user!.uid}/$fileName');
     await ref.putFile(imageFile);
     String downloadURL = await ref.getDownloadURL();
 
     // Update Firestore with the new image URL
-    User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
         'imageUrl': downloadURL,

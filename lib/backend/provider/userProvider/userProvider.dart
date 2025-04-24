@@ -1,4 +1,4 @@
-import 'package:clotstoreapp/model/userModel.dart';
+import 'package:clothstore_admin_pannel/model/user/userModel.dart';
 import 'package:flutter/cupertino.dart';
 
 class UserProvider extends ChangeNotifier {

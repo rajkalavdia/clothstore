@@ -1,5 +1,5 @@
+import 'package:clothstore_admin_pannel/model/user/searchProductModel.dart';
 import 'package:clotstoreapp/config/constant.dart';
-import 'package:clotstoreapp/model/searchProductModel.dart';
 import 'package:flutter/material.dart';
 
 class SearchScreen extends StatefulWidget {

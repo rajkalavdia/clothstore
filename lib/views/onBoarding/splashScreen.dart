@@ -1,11 +1,9 @@
 import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:clothstore_admin_pannel/model/user/userModel.dart';
 import 'package:clotstoreapp/backend/controller/signInController.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
-import '../../backend/provider/userProvider/userProvider.dart';
 import '../../config/styles.dart';
-import '../../model/userModel.dart';
 
 class SplashScreen extends StatefulWidget {
   static const String routeName = '/SplashScreen';
@@ -26,7 +24,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> checkUserStatus() async {
     Future.delayed(const Duration(seconds: 4), () {});
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
 
     // Try to load user data from Firebase
     UserModel? user1 = await UserController().loadUserData(context);
@@ -34,7 +31,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // Navigate based on result
     if (user1 != null) {
-      // User is logged in, go to home
       Navigator.of(context).pushReplacementNamed('/MainScreen');
     } else {
       // No user logged in, go to login screen

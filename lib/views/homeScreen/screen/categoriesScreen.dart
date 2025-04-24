@@ -1,5 +1,5 @@
+import 'package:clothstore_admin_pannel/model/user/categoriesModel.dart';
 import 'package:clotstoreapp/config/constant.dart';
-import 'package:clotstoreapp/model/categoriesModel.dart';
 import 'package:flutter/material.dart';
 
 class CategoriesScreen extends StatelessWidget {
