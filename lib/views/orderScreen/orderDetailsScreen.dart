@@ -32,34 +32,40 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   late CartProvider cartProvider;
 
   @override
-  Widget build(BuildContext context) {
-    orderProvider = context.watch<OrderProvider>();
-    cartProvider = context.watch<CartProvider>();
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    orderProvider = context.read<OrderProvider>();
+    cartProvider = context.read<CartProvider>();
+  }
 
+  @override
+  Widget build(BuildContext context) {
+    final OrdersModel order = ModalRoute.of(context)!.settings.arguments as OrdersModel;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            getHeader(),
-            _getOrderDetailsTimeline(),
-            _orderItems(),
-            getShippingAddress(),
-            getPaymentMethod(),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              getHeader(),
+              _getOrderDetailsTimeline(),
+              _orderItems(order: order),
+              getShippingAddress(order: order),
+              getPaymentMethod(order: order),
+            ],
+          ),
         ),
       ),
     );
   }
 
-
   Widget getHeader() {
-    final orderIdArgs = ModalRoute.of(context)!.settings.arguments as OrdersModel;
     return Row(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+          padding: const EdgeInsets.fromLTRB(7, 0, 0, 0),
           child: IconButton(
             onPressed: () {
               Navigator.pop(context);
@@ -69,7 +75,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                 Colors.grey[300],
               ),
               fixedSize: WidgetStatePropertyAll(
-                Size.fromRadius(30),
+                Size.fromRadius(20),
               ),
             ),
             icon: Image.asset(
@@ -78,16 +84,12 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            vertical: 15,
-            horizontal: 15,
-          ),
-          child: Text(
-            'Order #' + '${orderIdArgs.orderId}',
-            style: TextStyle(fontSize: 25),
-          ),
+        Expanded(child: SizedBox()),
+        Text(
+          "Order Details",
+          style: TextStyle(fontSize: 20),
         ),
+        Expanded(child: SizedBox()),
       ],
     );
   }
@@ -164,29 +166,38 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     );
   }
 
-  Widget _orderItems() {
-    // final List<OrdersModel> cartProductModelList = orderProvider.ordersList;
-    final orderIdArgs = ModalRoute.of(context)!.settings.arguments as OrdersModel;
+  Widget _orderItems({required OrdersModel order}) {
     return ListView.builder(
-      itemCount: orderIdArgs.checkOutOrdersList.length,
+      itemCount: order.productList.length,
       shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
       itemBuilder: (context, index) {
+        final _model = order;
         return Column(
           children: [
             Container(
-              height: 70,
-              margin: EdgeInsets.symmetric(vertical: 10),
+              height: 80,
+              margin: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+              padding: EdgeInsets.all(3),
               decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(15)),
               child: Row(
                 children: [
-                  Image.asset(orderIdArgs.checkOutOrdersList[index].cartProductImage),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(15),
+                    child: Image.network(
+                      _model.productList[index].cartProductImage,
+                    ),
+                  ),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Padding(
                         padding: const EdgeInsets.fromLTRB(10, 5, 0, 10),
-                        child: Text(orderIdArgs.checkOutOrdersList[index].cartProductName),
+                        child: Text(
+                          _model.productList[index].cartProductName,
+                          style: TextStyle(color: Colors.black, fontSize: 15),
+                        ),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -204,7 +215,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                                     ),
                                   ),
                                   TextSpan(
-                                    text: orderIdArgs.checkOutOrdersList[index].cartProductSize,
+                                    text: _model.productList[index].cartProductSize,
                                     style: TextStyle(
                                       color: Colors.black,
                                       fontSize: 15,
@@ -227,7 +238,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                             Container(
                               height: 20,
                               width: 20,
-                              child: Text(orderIdArgs.checkOutOrdersList[index].cartProductColor),
+                              child: Text(_model.productList[index].cartProductColor),
                             ),
                           ],
                         ),
@@ -239,14 +250,14 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        '\$${orderIdArgs.checkOutOrdersList[index].cartProductPrice * orderIdArgs.checkOutOrdersList[index].cartProductQuantity}',
+                        '₹${_model.productList[index].cartProductPrice * _model.productList[index].cartProductQuantity}',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                         ),
                       ),
                       Text(
-                        orderIdArgs.checkOutOrdersList[index].cartProductQuantity.toString(),
+                        _model.productList[index].cartProductQuantity.toString(),
                         style: TextStyle(
                           fontSize: 20,
                         ),
@@ -262,8 +273,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     );
   }
 
-  Widget getShippingAddress() {
-    final orderIdArgs = ModalRoute.of(context)!.settings.arguments as OrdersModel;
+  Widget getShippingAddress({required OrdersModel order}) {
     return Column(children: [
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
@@ -290,7 +300,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           child: Row(
             children: [
               Text(
-                orderIdArgs.shippingAddress,
+                order.shippingAddress,
                 style: TextStyle(fontSize: 16),
               ),
             ],
@@ -300,8 +310,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     ]);
   }
 
-  Widget getPaymentMethod() {
-    final orderIdArgs = ModalRoute.of(context)!.settings.arguments as OrdersModel;
+  Widget getPaymentMethod({required OrdersModel order}) {
     return Column(
       children: [
         Padding(
@@ -330,7 +339,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               child: Row(
                 children: [
                   Text(
-                    orderIdArgs.paymentMethod,
+                    order.paymentMethod,
                     style: TextStyle(fontSize: 16),
                   ),
                 ],

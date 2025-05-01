@@ -1,4 +1,6 @@
+import 'package:clotstoreapp/backend/controller/userController.dart';
 import 'package:clotstoreapp/backend/provider/ordersList/addOrderProvider.dart';
+import 'package:clotstoreapp/backend/provider/userProvider/userProvider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -20,11 +22,25 @@ class _OrdersShowScreenState extends State<OrdersShowScreen> {
     'Cancelled',
   ];
 
-  late OrderProvider addOrderProvider;
+  OrderProvider addOrderProvider = OrderProvider();
+  UserProviderInUserApp userProvider = UserProviderInUserApp();
+
+  void getOrders() async {
+    await UserControllerInUserApp().getOrderFromFirebase(userProvider, addOrderProvider);
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    addOrderProvider = context.read<OrderProvider>();
+    userProvider = context.read<UserProviderInUserApp>();
+    getOrders();
+  }
 
   @override
   Widget build(BuildContext context) {
-    addOrderProvider = context.watch<OrderProvider>();
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -109,12 +125,12 @@ class _OrdersShowScreenState extends State<OrdersShowScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'Order #' + '${_model.orderId}',
+                              _model.orderId,
                               style: TextStyle(
                                   fontSize: 20
                               ),
                             ),
-                            Text('${_model.itemsCount}' + 'items'),
+                            Text('${_model.itemsCount}' 'items'),
                           ],
                         ),
                       ),

@@ -23,14 +23,14 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> checkUserStatus() async {
-    Future.delayed(const Duration(seconds: 4), () {});
+    await Future.delayed(const Duration(seconds: 4));
 
     // Try to load user data from Firebase
-    UserModel? user1 = await UserController().loadUserData(context);
-    print("user in splashscreen : ${user1?.uid}");
+    UserModel? userModel = await signUpController().loadUserData(context);
+    print("User no data avyo ${userModel?.name}");
 
     // Navigate based on result
-    if (user1 != null) {
+    if (userModel != null) {
       Navigator.of(context).pushReplacementNamed('/MainScreen');
     } else {
       // No user logged in, go to login screen

@@ -8,7 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../provider/userProvider/userProvider.dart';
 
-Future<void> uploadProfilePicture(UserProvider userProvider) async {
+Future<void> uploadProfilePicture(UserProviderInUserApp userProvider) async {
   User? user = FirebaseAuth.instance.currentUser;
   final picker = ImagePicker();
   XFile? pickedImage = await picker.pickImage(source: ImageSource.gallery);
@@ -39,7 +39,7 @@ Future<void> uploadProfilePicture(UserProvider userProvider) async {
   }
 }
 
-Future<void> updateProfilePicture(String downloadURL, UserProvider userProvider) async {
+Future<void> updateProfilePicture(String downloadURL, UserProviderInUserApp userProvider) async {
   User? user = FirebaseAuth.instance.currentUser;
   if (user != null) {
     // Update Firestore with the new image URL

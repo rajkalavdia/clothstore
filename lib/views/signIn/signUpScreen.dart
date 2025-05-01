@@ -51,10 +51,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
         return;
       }
 
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final userProvider = Provider.of<UserProviderInUserApp>(context, listen: false);
       // userProvider.clearUser(); // Clear previous user data
 
-      UserModel? user = await UserController().signUpWithEmail(
+      UserModel? user = await signUpController().signUpWithEmail(
         context,
         _emailController.text,
         _passwordController.text,

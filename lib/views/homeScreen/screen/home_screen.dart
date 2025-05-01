@@ -1,11 +1,12 @@
-import 'package:clothstore_admin_pannel/model/user/categoriesModel.dart';
-import 'package:clotstoreapp/config/constant.dart';
+import 'package:clotstoreapp/backend/provider/category/categoryProvider.dart';
+import 'package:clotstoreapp/backend/provider/userProvider/userProvider.dart';
 import 'package:clotstoreapp/views/ProductScreen/ProductDetailsScreen.dart';
 import 'package:clotstoreapp/views/homeScreen/components/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 import 'package:provider/provider.dart';
 
+import '../../../backend/controller/categoryController.dart';
 import '../../../backend/controller/productController.dart';
 import '../../../backend/provider/product/productProvider.dart';
 
@@ -19,20 +20,28 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<CategoriesModel> _categories = CategoriesModelList.categories;
-
   final _scrollController = ScrollController();
 
-  late ProductProvider productProvider;
+  ProductProvider productProvider = ProductProvider();
+  CategoryProvider categoryProvider = CategoryProvider();
+  late UserProviderInUserApp userProvider;
+
+  List<String> favouriteProducts = [];
+
+  Future<void> getControllers() async {
+    await CategoryController().getCategoryFirebase(categoryProvider);
+    await ProductController().getProductFromFirebase(productProvider);
+  }
 
   @override
   void initState() {
     super.initState();
     productProvider = Provider.of<ProductProvider>(context, listen: false);
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      productProvider = Provider.of<ProductProvider>(context, listen: false);
-      await ProductController().getProductFromFirebase(productProvider);
-    });
+    categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
+    userProvider = Provider.of<UserProviderInUserApp>(context, listen: false);
+    getControllers();
+
+    favouriteProducts = userProvider.user!.favouriteProductIDs;
 
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent && !productProvider.isLoading && productProvider.hashMore) {
@@ -43,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print("productProvider.isLoading:${productProvider.isLoading}");
     return SafeArea(
       child: ModalProgressHUD(
         inAsyncCall: productProvider.isLoading,
@@ -54,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               children: [
                 getSearchFieldWidget(),
-                getCategoriesWidget(),
+                getCategories(),
                 getTopSellingWidget(),
               ],
             ),
@@ -97,73 +107,39 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget getCategoriesWidget() {
-    return Column(
-      children: [
-        InkWell(
-          onTap: () {
-            Navigator.pushNamed(context, '/CategoriesScreen');
-          },
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'Categories',
-                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: InkWell(
-                  onTap: () {
-                    Navigator.pushNamed(context, '/CategoriesScreen');
-                  },
-                  child: Text(
-                    'See All',
-                    style: TextStyle(
-                      fontSize: 20,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15),
+  Widget getCategories() {
+    return Consumer<CategoryProvider>(
+      builder: (context, provider, child) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
           child: SizedBox(
             height: 80,
             child: ListView.builder(
-              itemCount: _categories.length,
+              itemCount: categoryProvider.categoryList.length,
               scrollDirection: Axis.horizontal,
               itemBuilder: (context, index) {
-                CategoriesModel model = _categories[index];
+                final model = categoryProvider.categoryList[index];
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 7),
                   child: Column(
                     children: [
-                      CircleAvatar(
-                        radius: 30,
-                        child: ClipOval(
-                          child: Image.asset(
-                            model.categoriesImage,
-                            height: 80,
-                            width: 80,
-                            fit: BoxFit.fill,
-                          ),
+                      ClipOval(
+                        child: Image.network(
+                          model.categoryImageUrl,
+                          height: 60,
+                          width: 60,
+                          fit: BoxFit.contain,
                         ),
                       ),
-                      Text(model.categoriesName),
+                      Text(model.categoryName),
                     ],
                   ),
                 );
               },
             ),
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -195,7 +171,12 @@ class _HomeScreenState extends State<HomeScreen> {
           return productProvider.productModelList.isEmpty && productProvider.isLoading
               ? Center(child: CircularProgressIndicator())
               : GridView.builder(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 5, crossAxisSpacing: 5, childAspectRatio: 0.5),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 5,
+                    crossAxisSpacing: 5,
+                    childAspectRatio: 0.5,
+                  ),
                   physics: NeverScrollableScrollPhysics(),
                   itemCount: productProvider.productModelList.length,
                   shrinkWrap: true,
@@ -235,19 +216,25 @@ class _HomeScreenState extends State<HomeScreen> {
                                     right: 0,
                                     top: 0,
                                     child: IconButton(
-                                      onPressed: () {
-                                        _model.productFavourite = !_model.productFavourite;
-                                      },
-                                      icon: (_model.productFavourite == false)
-                                          ? Image.asset(
-                                              'asset/icons/default_like_button.png',
-                                              height: 35,
-                                            )
-                                          : Image.asset(
-                                              'asset/icons/liked_product_button.png',
-                                              height: 35,
-                                            ),
-                                    ),
+                                        onPressed: () async {
+                                          await ProductController().setFavouriteProducts(_model.productId);
+                                          setState(() {
+                                            if (favouriteProducts.contains(_model.productId)) {
+                                              favouriteProducts.remove(_model.productId);
+                                            } else {
+                                              favouriteProducts.add(_model.productId);
+                                            }
+                                          });
+                                        },
+                                        icon: (favouriteProducts.contains(_model.productId))
+                                            ? Image.asset(
+                                                'asset/icons/liked_product_button.png',
+                                                height: 35,
+                                              )
+                                            : Image.asset(
+                                                'asset/icons/default_like_button.png',
+                                                height: 35,
+                                              )),
                                   ),
                                 ],
                               ),
@@ -260,7 +247,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 style: TextStyle(fontSize: 18),
                               ),
                               Text(
-                                '\₹' + (_model.productPrice.toString()),
+                                '₹${_model.productPrice.toInt()}',
                                 style: TextStyle(fontSize: 18),
                               ),
                             ],

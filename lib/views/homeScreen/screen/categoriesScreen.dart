@@ -1,91 +1,122 @@
-import 'package:clothstore_admin_pannel/model/user/categoriesModel.dart';
-import 'package:clotstoreapp/config/constant.dart';
+import 'package:clotstoreapp/backend/provider/category/categoryProvider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-class CategoriesScreen extends StatelessWidget {
+import '../../../backend/controller/categoryController.dart';
+
+class CategoriesScreen extends StatefulWidget {
   static const String routeName = "/CategoriesScreen";
+
   const CategoriesScreen({super.key});
 
   @override
+  State<CategoriesScreen> createState() => _CategoriesScreenState();
+}
+
+class _CategoriesScreenState extends State<CategoriesScreen> {
+  CategoryProvider categoryProvider = CategoryProvider();
+  bool isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
+      await CategoryController().getCategoryFirebase(categoryProvider);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    List<CategoriesModel> _categories = CategoriesModelList.categories;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            Row(
-              children: [
-                Container(
-                  height: 60,
-                  width: 60,
-                  margin: EdgeInsets.fromLTRB(30, 50, 0, 20),
-                  decoration:BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(40)
-                  ) ,
-                  child: IconButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    icon: Image.asset('asset/icons/arrowleftBlack.png'),
-                  ),
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Text(
-                    'Shop by Categories',
-                    style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: _categories.length ,
-                scrollDirection: Axis.vertical,
-                itemBuilder: (context, index) {
-                  CategoriesModel model = _categories[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 7),
-                    child: Container(
-                      margin: EdgeInsets.symmetric(vertical: 10),
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                          borderRadius:BorderRadius.circular(20)
-                      ),
-                      child: Row(
-                        children: [
-                          SizedBox(width: 10,),
-                          CircleAvatar(
-                            radius: 30,
-                            child: ClipOval(
-                              child: Image.asset(
-                                model.categoriesImage,
-                                height: 80,
-                                width: 80,
-                                fit: BoxFit.fill,
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 10,),
-                          Text(model.categoriesName , style: TextStyle(fontSize: 25),),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
+            getHeader(),
+            getCategories(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget getHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: () {
+            Navigator.pop(context);
+          },
+          child: Container(
+            height: 50,
+            width: 50,
+            margin: EdgeInsets.all(8),
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(40), color: Colors.black12),
+            child: Image.asset(
+              "asset/icons/arrowleftBlack.png",
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Text(
+            'Categories',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget getCategories() {
+    return Consumer<CategoryProvider>(
+      builder: (context, provider, child) {
+        return Expanded(
+          child: ListView.builder(
+              itemCount: categoryProvider.categoryList.length,
+              itemBuilder: (context, int index) {
+                final _model = categoryProvider.categoryList[index];
+                print("Category Name: ${_model.categoryName}"); // This line prints the category name
+                return Container(
+                  margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: EdgeInsets.symmetric(vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurpleAccent,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        height: 70,
+                        width: 70,
+                        margin: EdgeInsets.symmetric(horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(40),
+                        ),
+                        child: ClipOval(
+                          child: Image.network(
+                            _model.categoryImageUrl,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          _model.categoryName,
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+        );
+      },
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:clothstore_admin_pannel/model/productModel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../provider/product/productProvider.dart';
 
@@ -10,6 +11,7 @@ class ProductController {
 
   Future<void> getProductFromFirebase(ProductProvider provider) async {
     if (provider.isLoading || !provider.hashMore) return;
+
     provider.startLoading();
     try {
       List<ProductModel> productList = <ProductModel>[];
@@ -60,7 +62,29 @@ class ProductController {
       }
     } catch (e, s) {
       return print("Error of product model get In firebase: $e, $s");
+    } finally {
+      provider.stopLoading();
     }
-    provider.stopLoading();
+  }
+
+  Future<void> setFavouriteProducts(String productUID) async {
+    final userUID = FirebaseAuth.instance.currentUser!.uid;
+    final userDocRef = await _firebase.collection('users').doc(userUID);
+
+    final userDocument = await userDocRef.get();
+
+    if (userDocument.exists) {
+      List<dynamic> currentFavourites = userDocument.data()?['favouriteProductIDs'] ?? [];
+
+      if (currentFavourites.contains(productUID)) {
+        await userDocRef.update({
+          'favouriteProductIDs': FieldValue.arrayRemove([productUID])
+        });
+      } else {
+        await userDocRef.update({
+          'favouriteProductIDs': FieldValue.arrayUnion([productUID])
+        });
+      }
+    }
   }
 }

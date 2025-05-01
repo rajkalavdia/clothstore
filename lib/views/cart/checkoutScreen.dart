@@ -1,9 +1,14 @@
-import 'dart:math';
-
 import 'package:clothstore_admin_pannel/model/user/cartProductModel.dart';
 import 'package:clothstore_admin_pannel/model/user/ordersModel.dart';
+import 'package:clotstoreapp/backend/controller/ordersController.dart';
+import 'package:clotstoreapp/backend/controller/userController.dart';
 import 'package:clotstoreapp/backend/provider/ordersList/addOrderProvider.dart';
+import 'package:clotstoreapp/backend/provider/userProvider/userProvider.dart';
+import 'package:clotstoreapp/utils/autoGenerateUID.dart';
+import 'package:clotstoreapp/views/cart/placedOrder.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 import 'package:provider/provider.dart';
 
 import '../../backend/provider/cart/cart-provider.dart';
@@ -22,11 +27,16 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen> {
   late CartProvider cartProvider;
   late OrderProvider orderProvider;
+  late UserProviderInUserApp userProviderInUserApp;
   late List<CartProductModel> cartProduct;
 
   String? selectedPaymentMethod;
   bool isDropdownOpen = false;
+
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   TextEditingController shippingAddressController = TextEditingController();
+
+  bool isLoading = false;
 
   final List<String> paymentMethods = [
     'Credit Card',
@@ -43,45 +53,78 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     cartProvider = context.read<CartProvider>();
     cartProduct = cartProvider.cartProductsList;
     orderProvider = context.read<OrderProvider>();
+    userProviderInUserApp = context.read<UserProviderInUserApp>();
   }
 
-  Future<void> addToOrder({required List<CartProductModel> listOfModel}) async {
-    final _random = Random();
-    int next(int min, int max) => min + _random.nextInt(max - min);
+  Future<void> addToOrder({required List<CartProductModel> listOfModel, required int itemCount, required double totalAmount}) async {
+    if (_formKey.currentState!.validate() && selectedPaymentMethod != null && selectedPaymentMethod!.isNotEmpty) {
+      setState(() {
+        isLoading = true;
+      });
 
-    print("cartProduct in checkoutscreen from provider : $cartProduct:");
-    print("cartProduct passed from another screen : $listOfModel:");
+      String newId = await AutoGenerateUID().getAutogenerateUIDForOrder();
+
+      print("cartProduct in checkoutscreen from provider : $cartProduct:");
+      print("cartProduct passed from another screen : $listOfModel:");
 
     OrdersModel ordersModel = OrdersModel(
-      itemsCount: cartProduct.length,
-      orderId: next(1000, 9999),
-      cartProductModelList: listOfModel,
-      shippingAddress:shippingAddressController.text,
-      paymentMethod: selectedPaymentMethod!,
-    );
-    orderProvider.addToOrder(ordersModel);
+        itemsCount: itemCount,
+        orderId: newId,
+        productList: listOfModel,
+        orderAmount: totalAmount,
+        placedOrderAt: Timestamp.now(),
+        shippingAddress: shippingAddressController.text,
+        paymentMethod: selectedPaymentMethod!,
+        purchasedBY: userProviderInUserApp.user!.uid,
+      );
+      await OrdersController().setOrdersOnFirebase(ordersModel, listOfModel);
 
-    Navigator.pushNamed(context, '/PlaceOrderScreen');
+      await UserControllerInUserApp().setOrdersIdOnUserFirebase(newId, userProviderInUserApp);
 
-    cartProduct.removeRange(0, cartProduct.length);
-    setState(() {});
+      orderProvider.ordersList.clear();
+
+      await UserControllerInUserApp().getOrderFromFirebase(userProviderInUserApp, orderProvider);
+
+      setState(() {});
+      cartProduct.removeRange(0, cartProduct.length);
+
+      Navigator.pushNamed(context, PlaceOrderScreen.routeName);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(" Please Select the Payment Method!"),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(8),
+        ),
+      );
+    }
+
+    setState(() {
+      isLoading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: BouncingScrollPhysics(), // Smooth scrolling
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          child: Column(
-            children: [
-              getHeaderWidget(),
-              getSomePurchaseDataWidget(),
-              getPurchaseSummaryWidget(),
-              checkOutButton(),
-            ],
+    return SafeArea(
+      child: ModalProgressHUD(
+        inAsyncCall: isLoading,
+        progressIndicator: Center(
+          child: CircularProgressIndicator(),
+        ),
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          body: SingleChildScrollView(
+            physics: BouncingScrollPhysics(), // Smooth scrolling
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            child: Column(
+              children: [
+                getHeaderWidget(),
+                getSomePurchaseDataWidget(),
+                getPurchaseSummaryWidget(),
+                checkOutButton(),
+              ],
+            ),
           ),
         ),
       ),
@@ -122,27 +165,36 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       children: [
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-          child: TextField(
-            decoration: InputDecoration(
-              labelText: 'Shipping Address',
-              labelStyle: TextStyle(color: Colors.black38),
-              hintText: 'Add Shipping Address',
-              hintStyle: TextStyle(fontSize: 20, color: Colors.black38),
-              filled: true,
-              fillColor: Colors.grey[300],
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: BorderSide.none,
-              ),
-              suffixIcon: Padding(
-                padding: EdgeInsets.only(right: 10),
-                child: Image.asset(
-                  'asset/icons/arrowrightBlack.png',
-                  height: 20,
+          child: Form(
+            key: _formKey,
+            child: TextFormField(
+              validator: (String? value) {
+                if (value == null || value.isEmpty) {
+                  return " Please Enter the Address ";
+                }
+                return null;
+              },
+              decoration: InputDecoration(
+                labelText: 'Shipping Address',
+                labelStyle: TextStyle(color: Colors.black38),
+                hintText: 'Add Shipping Address',
+                hintStyle: TextStyle(fontSize: 20, color: Colors.black38),
+                filled: true,
+                fillColor: Colors.grey[300],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide.none,
+                ),
+                suffixIcon: Padding(
+                  padding: EdgeInsets.only(right: 10),
+                  child: Image.asset(
+                    'asset/icons/arrowrightBlack.png',
+                    height: 20,
+                  ),
                 ),
               ),
+              controller: shippingAddressController,
             ),
-            controller: shippingAddressController,
           ),
         ),
         Padding(
@@ -194,16 +246,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final cartSummery = cartProductListArgs["orderCostData"];
     return Column(
       children: [
-        getProductSummaryWidget(title: "Product Total", value: '\$${cartSummery.productTotal}'
+        getProductSummaryWidget(title: "Product Total", value: '₹${cartSummery.productTotal}'
             // '\$$productTotal',
             ),
-        getProductSummaryWidget(title: "Shipping Cost", value: '\$${cartSummery.shippingCost}'
+        getProductSummaryWidget(title: "Shipping Cost", value: '₹${cartSummery.shippingCost}'
             // '\$$shippingCost',
             ),
-        getProductSummaryWidget(title: "Tax", value: '\$${cartSummery.tax}'
+        getProductSummaryWidget(title: "Tax", value: '₹${cartSummery.tax}'
             // '\$$tax',
             ),
-        getProductSummaryWidget(title: "Order Total", value: '\$${cartSummery.orderTotal}'
+        getProductSummaryWidget(title: "Order Total", value: '₹${cartSummery.orderTotal}'
             // '\$$orderTotal',
             ),
       ],
@@ -231,10 +283,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Widget checkOutButton() {
     final cartProductListArgs = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-    List<CartProductModel> cartProductModels = cartProductListArgs["cartProductModelList"];
+    List<CartProductModel> cartProductModelList = cartProductListArgs["cartProductModelList"];
+    final total = cartProductListArgs['totalAmount'];
+    int _itemCount = 0;
+    for (var model in cartProductModelList) {
+      int data = model.cartProductQuantity;
+      _itemCount = data + _itemCount;
+    }
+
     return InkWell(
-      onTap: () {
-        addToOrder(listOfModel: cartProductModels);
+      onTap: () async {
+        await addToOrder(listOfModel: cartProductModelList, itemCount: _itemCount, totalAmount: total);
       },
       child: Container(
         height: 50,

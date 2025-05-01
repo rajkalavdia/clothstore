@@ -18,7 +18,7 @@ class CartProductList extends StatefulWidget {
 
 class _CartProductListState extends State<CartProductList> {
   // List<CartProductModel> cartProduct = CartProductModelList.cartProductsList;
-  late OrderCostData orderCostData = OrderCostData(0, 5, 10, 0);
+  OrderCostData orderCostData = OrderCostData(0, 5, 10, 0);
   late CartProvider cartProvider;
   late List<CartProductModel> cartProduct;
   late List<CartProductModel> storedCartProduct; // Independent stored list
@@ -94,11 +94,16 @@ class _CartProductListState extends State<CartProductList> {
           final _model = cartProduct[index];
           return Container(
             height: 70,
-            margin: EdgeInsets.symmetric(vertical: 10),
+            margin: EdgeInsets.symmetric(vertical: 10, horizontal: 5),
             decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(15)),
             child: Row(
               children: [
-                Image.asset(_model.cartProductImage),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(15),
+                  child: Image.network(
+                    _model.cartProductImage,
+                  ),
+                ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -146,7 +151,14 @@ class _CartProductListState extends State<CartProductList> {
                           Container(
                             height: 20,
                             width: 20,
-                            child: Text(_model.cartProductColor!),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(15),
+                              color: Color(
+                                int.parse(
+                                  _model.cartProductColor,
+                                ),
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -158,7 +170,7 @@ class _CartProductListState extends State<CartProductList> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      '\$${_model.cartProductPrice * _model.cartProductQuantity}',
+                      '₹${_model.cartProductPrice * _model.cartProductQuantity}',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
@@ -266,19 +278,19 @@ class _CartProductListState extends State<CartProductList> {
       children: [
         getProductSummaryItemWidget(
           title: "Product Total",
-          value: '\$${calculateSumOfCartProducts()}',
+          value: '₹${calculateSumOfCartProducts()}',
         ),
         getProductSummaryItemWidget(
           title: "Shipping Cost",
-          value: '\$${orderCostData.shippingCost}',
+          value: '₹${orderCostData.shippingCost}',
         ),
         getProductSummaryItemWidget(
           title: "Tax",
-          value: '\$${orderCostData.tax}',
+          value: '₹${orderCostData.tax}',
         ),
         getProductSummaryItemWidget(
           title: "Order Total",
-          value: '\$${orderCostData.orderTotal}',
+          value: '₹${orderCostData.orderTotal}',
         ),
       ],
     );
@@ -392,6 +404,7 @@ class _CartProductListState extends State<CartProductList> {
               orderCostData.orderTotal,
             ),
             "cartProductModelList": storedCartProduct,
+            'totalAmount': orderCostData.orderTotal
           });
         }
       },

@@ -1,3 +1,4 @@
+import 'package:clotstoreapp/backend/provider/category/categoryProvider.dart';
 import 'package:clotstoreapp/backend/provider/ordersList/addOrderProvider.dart';
 import 'package:clotstoreapp/backend/provider/product/productProvider.dart';
 import 'package:clotstoreapp/views/cart/cartProductList.dart';
@@ -61,7 +62,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<CartProvider>(create: (context) => CartProvider()),
         ChangeNotifierProvider<BottomNavBarProvider>(create: (context) => BottomNavBarProvider()),
         ChangeNotifierProvider<OrderProvider>(create: (context) => OrderProvider()),
-        ChangeNotifierProvider<UserProvider>(create: (context) => UserProvider()),
+        ChangeNotifierProvider<UserProviderInUserApp>(create: (context) => UserProviderInUserApp()),
+        ChangeNotifierProvider<CategoryProvider>(create: (context) => CategoryProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

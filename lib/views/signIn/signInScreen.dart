@@ -85,7 +85,7 @@ class _SignInScreenState extends State<SignInScreen> {
       isLoading = true;
     });
     print('Loader Start : $isLoading');
-    UserModel? user = await UserController().signInWithGoogle(context);
+    UserModel? user = await signUpController().signInWithGoogle(context);
 
     if (user != null) {
       // If new user (no phone number), navigate to complete profile
@@ -271,14 +271,14 @@ class _SignInScreenState extends State<SignInScreen> {
             _isValidationEnabled = true;
           });
           // getAuthData();
-          UserModel? user = await UserController().signInUser(_emailController.text, _passwordController.text, context);
+          UserModel? user = await signUpController().signInUser(_emailController.text, _passwordController.text, context);
           print("user12345678 : ${user?.email}");
           print("user12345678 : ${user?.name}");
           print("user12345678 : ${user?.phoneNumber}");
           if (user != null) {
             if (user.phoneNumber == null || user.name == null || user.email == null) {
               Navigator.pushNamed(context, CompleteProfileScreen.routeName);
-              UserModel? user = await UserController().signInUser(_emailController.text, _passwordController.text, context);
+              UserModel? user = await signUpController().signInUser(_emailController.text, _passwordController.text, context);
             } else {
               Navigator.of(context).pushReplacementNamed('/MainScreen');
             }

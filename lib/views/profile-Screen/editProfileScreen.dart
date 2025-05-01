@@ -14,34 +14,16 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _numberController = TextEditingController();
 
-  late UserProvider userProvider;
-  late UserModel userModel;
+  late UserProviderInUserApp userProvider;
 
-  Future<String?> validateUserDetails({String? name, String? email, String? number}) async {
+  Future<String?> validateUserDetails({String? name}) async {
     final CollectionReference usersCollection = FirebaseFirestore.instance.collection('users');
 
     try {
-      // Check for existing email
-      if (email != null && email.isNotEmpty) {
-        QuerySnapshot emailQuery = await usersCollection.where('email', isEqualTo: email).get();
-        if (emailQuery.docs.isNotEmpty) {
-          return "This email is already registered. Please use a different one.";
-        }
-      }
-
-      // Check for existing phone number
-      if (number != null && number.isNotEmpty) {
-        QuerySnapshot numberQuery = await usersCollection.where('number', isEqualTo: number).get();
-        if (numberQuery.docs.isNotEmpty) {
-          return "This phone number is already registered. Please use a different one.";
-        }
-      }
-
       // Check for existing name (optional)
       if (name != null && name.isNotEmpty) {
         QuerySnapshot nameQuery = await usersCollection.where('name', isEqualTo: name).get();
@@ -53,69 +35,68 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return "Error checking user details: $e";
     }
 
-    return null; // No duplicates found, validation passed
+    return null;
   }
 
   Future<UserModel?> userProfileModel(BuildContext context) async {
     String newName = _nameController.text.trim();
-    String newEmail = _emailController.text.trim();
-    String newNumber = _numberController.text.trim();
 
-    // Validate if name, email, or number already exist
-    String? validationError = await validateUserDetails(name: newName, email: newEmail, number: newNumber);
+    String? validationError = await validateUserDetails(name: newName);
 
     if (validationError != null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(validationError)));
-      return null; // Stop if validation fails
+      return null;
     }
-
     FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
+    UserModel? user = userProvider.user;
+    print(" User model in user uid  : ${user!.uid}");
     try {
-      DocumentSnapshot userDoc = await _firestore.collection('users').doc(userModel.uid).get();
-
+      DocumentSnapshot userDoc = await _firestore.collection('users').doc(user.uid).get();
       if (userDoc.exists) {
-        // User exists, load their data
-        userModel = UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
+        user = UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
+        user.name = newName;
+        user.lastLogin = DateTime.now();
 
-        UserModel newUserData = UserModel(
-          name: newName,
-          email: newEmail,
-          phoneNumber: newNumber,
-        );
-
-        await _firestore.collection('users').doc(userModel.uid).update({
-          'lastLogin': DateTime.now(),
+        await _firestore.collection('users').doc(user.uid).update({
+          'lastLogin': user.lastLogin,
           'name': newName,
-          'email': newEmail,
-          'phoneNumber': newNumber,
         });
 
-        userProvider.setUser(newUserData);
+        userProvider.setUser(user);
 
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Profile updated successfully!")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Profile updated successfully!"),
+          ),
+        );
 
         if (mounted) {
-          Navigator.pop(context); // Close the edit profile screen
+          Navigator.pop(context);
         }
-
-        return newUserData;
+        return user;
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("User document does not exist")));
-        return null;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("User document does not exist"),
+          ),
+        );
       }
     } catch (e) {
       print("Error checking user in Firestore: $e");
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to update profile: $e")));
-      return null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to update profile: $e"),
+        ),
+      );
     }
+    return null;
   }
 
   @override
   void didChangeDependencies() {
     // TODO: implement initState
     super.didChangeDependencies();
-    final preFillValueArgs = ModalRoute.of(context)!.settings.arguments as Map<String , String>;
+    final preFillValueArgs = ModalRoute.of(context)!.settings.arguments as Map<String, String>;
     final preFillName = preFillValueArgs["EditName"];
     final preFillEmail = preFillValueArgs["EditEmail"];
     final preFillNumber = preFillValueArgs["EditNumber"];
@@ -124,8 +105,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _emailController.text = preFillEmail!;
     _numberController.text = preFillNumber!;
 
-    userProvider = Provider.of<UserProvider>(context, listen: false);
-    userModel = userProvider.user!;
+    userProvider = Provider.of<UserProviderInUserApp>(context, listen: false);
   }
 
   @override
@@ -157,7 +137,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             width: 50,
             padding: EdgeInsets.all(11),
             margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(40), color: Colors.black12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(40),
+              color: Colors.black12,
+            ),
             child: Image.asset('asset/icons/arrowleftBlack.png'),
           ),
         ),
@@ -179,15 +162,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       children: [
         Container(
           padding: EdgeInsets.all(8),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(15), color: Colors.black12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+            color: Colors.black12,
+          ),
           margin: EdgeInsets.fromLTRB(15, 15, 15, 0),
           child: TextFormField(
             controller: _nameController,
             decoration: InputDecoration(
               labelText: "Name",
               hintText: "Enter Name",
-              labelStyle: TextStyle(color: Colors.black),
-              hintStyle: TextStyle(color: Colors.black38),
+              labelStyle: TextStyle(color: Colors.black38),
               border: InputBorder.none,
               // fillColor: Colors.black12,
               // filled: true,
@@ -196,15 +181,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
         Container(
           padding: EdgeInsets.all(8),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(15), color: Colors.black12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+            color: Colors.black12,
+          ),
           margin: EdgeInsets.fromLTRB(15, 15, 15, 0),
           child: TextFormField(
+            enabled: false,
             controller: _emailController,
+            style: TextStyle(color: Colors.black),
             decoration: InputDecoration(
               labelText: "Email",
               hintText: "example1234@gmail.com",
-              labelStyle: TextStyle(color: Colors.black),
-              hintStyle: TextStyle(color: Colors.black38),
+              labelStyle: TextStyle(color: Colors.black38),
               border: InputBorder.none,
               // fillColor: Colors.black12,
               // filled: true,
@@ -213,16 +202,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
         Container(
           padding: EdgeInsets.all(8),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(15), color: Colors.black12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+            color: Colors.black12,
+          ),
           margin: EdgeInsets.fromLTRB(15, 15, 15, 0),
           child: TextFormField(
+            enabled: false,
             controller: _numberController,
             keyboardType: TextInputType.number,
+            style: TextStyle(color: Colors.black),
             decoration: InputDecoration(
               labelText: "Number",
-              hintText: "Enter Number",
-              labelStyle: TextStyle(color: Colors.black),
-              hintStyle: TextStyle(color: Colors.black38),
+              labelStyle: TextStyle(color: Colors.black38),
               border: InputBorder.none,
               // fillColor: Colors.black12,
               // filled: true,
@@ -238,13 +230,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         InkWell(
-          onTap: () {
-            userProfileModel(context);
+          onTap: () async {
+            await userProfileModel(context);
           },
           child: Container(
             height: 50,
             width: 80,
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(40), color: Colors.deepPurpleAccent),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(40),
+              color: Colors.deepPurpleAccent,
+            ),
             child: Center(
               child: Text(
                 "Save",

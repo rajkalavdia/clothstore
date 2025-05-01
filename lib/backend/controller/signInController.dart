@@ -7,22 +7,22 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 
 
-class UserController {
-  UserProvider? userProvider;
+class signUpController {
+  UserProviderInUserApp? userProvider;
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Try this version of getUserProvider for additional safety
-  UserProvider getUserProvider(BuildContext context) {
+  UserProviderInUserApp getUserProvider(BuildContext context) {
     try {
-      final provider = Provider.of<UserProvider>(context, listen: false);
+      final provider = Provider.of<UserProviderInUserApp>(context, listen: false);
       print("Successfully got UserProvider: $provider");
       return provider;
     } catch (e) {
       print("Error getting UserProvider: $e");
       // Fallback - create a new provider if needed
-      return UserProvider();
+      return UserProviderInUserApp();
     }
   }
 
@@ -89,7 +89,7 @@ class UserController {
         if (userDoc.exists) {
           // User exists, load their data
           UserModel userModel = UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
-          UserProvider userProvider = getUserProvider(context);
+          UserProviderInUserApp userProvider = getUserProvider(context);
           userProvider.setUser(userModel);
 
           return userModel;
@@ -349,7 +349,7 @@ class UserController {
         DocumentSnapshot userDoc = await _firestore.collection('users').doc(currentUser.uid).get();
 
         if (userDoc.exists) {
-          UserModel userModel = UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
+          final userModel = UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
 
           // Update last login time
           DateTime lastLogin = DateTime.now();
@@ -360,14 +360,12 @@ class UserController {
           userModel.lastLogin = lastLogin;
           userProvider = getUserProvider(context);
           userProvider?.setUser(userModel);
-          print("user Model for get data : ${userModel.uid}");
+          print("user Model for get data : ${userModel.favouriteProductIDs}");
           return userModel;
         }
       }
-      return null;
     } catch (e) {
       print('Error loading user data: $e');
-      return null;
     }
   }
 

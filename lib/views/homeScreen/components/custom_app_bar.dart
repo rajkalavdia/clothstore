@@ -10,12 +10,12 @@ class CustomAppBar extends StatefulWidget {
 }
 
 class _CustomAppBarState extends State<CustomAppBar> {
-  UserProvider? userProvider;
+  UserProviderInUserApp userProvider = UserProviderInUserApp();
 
   @override
   void initState() {
     super.initState();
-    userProvider = Provider.of<UserProvider>(context, listen: false);
+    userProvider = Provider.of<UserProviderInUserApp>(context, listen: false);
   }
 
   @override
@@ -36,10 +36,8 @@ class _CustomAppBarState extends State<CustomAppBar> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         InkWell(
-          onTap: () {
-            Navigator.pushNamed(context, '/ProfileScreen');
-          },
-          child: (userProvider?.user?.imageUrl != null)
+          onTap: () {},
+          child: (userProvider.user!.imageUrl != null)
               ? Container(
                   height: 55,
                   width: 55,
@@ -49,7 +47,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
                   ),
                   child: ClipOval(
                     child: Image.network(
-                      userProvider!.user!.imageUrl!,
+                      userProvider.user!.imageUrl,
                       fit: BoxFit.cover,
                       height: 55,
                     ),

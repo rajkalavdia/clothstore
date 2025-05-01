@@ -37,7 +37,7 @@ class _OtpVerificationState extends State<OtpVerification> {
       isLoading = true;
     });
     try {
-      UserModel? user = await UserController().signInWithPhone(
+      UserModel? user = await signUpController().signInWithPhone(
         number!,
         _verificationId,
         otpController.text.toString(),
@@ -54,7 +54,7 @@ class _OtpVerificationState extends State<OtpVerification> {
       if (user != null) {
         // Check if this user's profile is complete
         print('raj');
-        if (UserController().isProfileComplete(user)) {
+        if (signUpController().isProfileComplete(user)) {
           // User has a complete profile, go directly to home
           print('hiiii');
           Navigator.of(context).pushReplacementNamed('/MainScreen');

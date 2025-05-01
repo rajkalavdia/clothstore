@@ -29,7 +29,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   bool isEmailEnabled = true;
   bool isNumberEnabled = true;
 
-  late UserProvider userProvider;
+  late UserProviderInUserApp userProvider;
   bool _dataLoaded = false;
 
   String? userData;
@@ -123,7 +123,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
       return;
     }
 
-    bool success = await UserController().updateUserProfile(
+    bool success = await signUpController().updateUserProfile(
       name: _nameController.text,
       phoneNumber: (isNumberEnabled && _numberController.text.isNotEmpty) ? _numberController.text : null,
       email: (isEmailEnabled && _emailController.text.isNotEmpty) ? _emailController.text : null,
@@ -161,7 +161,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     if (!_dataLoaded) {
       _dataLoaded = true;
       print("Setting _dataLoaded to true");
-      userProvider = Provider.of<UserProvider>(context, listen: false);
+      userProvider = Provider.of<UserProviderInUserApp>(context, listen: false);
       loadExistingData();
     }
   }

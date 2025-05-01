@@ -1,9 +1,5 @@
 import 'package:clotstoreapp/backend/provider/bottomNavBar/BottomNavBarProvider.dart';
-import 'package:clotstoreapp/views/ProductScreen/ProductDetailsScreen.dart';
-import 'package:clotstoreapp/views/cart/cartProductList.dart';
-import 'package:clotstoreapp/views/homeScreen/screen/home_screen.dart';
 import 'package:clotstoreapp/views/homeScreen/screen/main_screen.dart';
-import 'package:clotstoreapp/views/orderScreen/ordersShowScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -72,8 +68,7 @@ class PlaceOrderScreen extends StatelessWidget {
           InkWell(
             onTap: (){
               bottomNavBarProvider.screenIndex = 1;
-              Navigator.of(context)..pop()..pop()..pop()..pop();
-              Navigator.pushNamed(context, MainScreen.routeName);
+              Navigator.popUntil(context, ModalRoute.withName(MainScreen.routeName));
             },
             child: Container(
               height: 50,

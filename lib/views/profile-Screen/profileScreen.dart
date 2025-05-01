@@ -24,7 +24,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String editName = " Loading....";
   String editEmail = " Loading....";
   String editNumber = " Loading....";
-  UserProvider? userProvider;
+  UserProviderInUserApp userProvider = UserProviderInUserApp();
 
   String? image;
 
@@ -33,7 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (!context.mounted) return print("context.mounted");
 
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userProvider = Provider.of<UserProviderInUserApp>(context, listen: false);
     final user = userProvider.user;
     print('user UId : ${user?.uid}');
     if (user != null) {
@@ -50,13 +50,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> signOut() async {
     await _googleSignIn.signOut();
     await _firebaseAuth.signOut();
-    userProvider?.clearUser();
+    userProvider.clearUser();
   }
 
   @override
   void initState() {
     super.initState();
-    userProvider = context.read<UserProvider>();
+    userProvider = context.read<UserProviderInUserApp>();
     getUserDetails();
   }
 
@@ -86,7 +86,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget getUserImageWidget() {
     return Stack(
       children: [
-        (userProvider?.user?.imageUrl != null)
+        (userProvider.user?.imageUrl != null)
             ? Container(
                 height: 100,
                 width: 100,
@@ -96,7 +96,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: ClipOval(
                   child: Image.network(
-                    userProvider!.user!.imageUrl!,
+                    userProvider.user!.imageUrl,
                     fit: BoxFit.cover,
                     height: 100,
                   ),
@@ -126,7 +126,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: IconButton(
               onPressed: () async {
                 try {
-                  await uploadProfilePicture(userProvider!);
+                  await uploadProfilePicture(userProvider);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Profile picture uploaded')),
                   );
