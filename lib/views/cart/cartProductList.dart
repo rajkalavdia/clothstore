@@ -1,5 +1,4 @@
 import 'dart:core';
-
 import 'package:clothstore_admin_pannel/model/user/cartProductModel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
